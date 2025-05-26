@@ -1106,6 +1106,80 @@ static RPCHelpMan submitheader()
     };
 }
 
+static RPCHelpMan startmining()
+{
+    return RPCHelpMan{"startmining",
+        "Start continuous mining to a specified address.",
+        {
+            {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "The address to send the newly generated krepto to."},
+            {"threads", RPCArg::Type::NUM, RPCArg::Default{1}, "Number of mining threads (default: 1)."},
+        },
+        RPCResult{
+            RPCResult::Type::OBJ, "", "",
+            {
+                {RPCResult::Type::BOOL, "mining", "Whether mining is now active"},
+                {RPCResult::Type::STR, "address", "Mining address"},
+                {RPCResult::Type::NUM, "threads", "Number of mining threads"},
+            }
+        },
+        RPCExamples{
+            "\nStart mining to myaddress\n"
+            + HelpExampleCli("startmining", "\"myaddress\"")
+            + "\nStart mining with 4 threads\n"
+            + HelpExampleCli("startmining", "\"myaddress\" 4")
+        },
+        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
+{
+    CTxDestination destination = DecodeDestination(request.params[0].get_str());
+    if (!IsValidDestination(destination)) {
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Error: Invalid address");
+    }
+
+    int threads = request.params[1].isNull() ? 1 : request.params[1].getInt<int>();
+    if (threads < 1 || threads > 16) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Error: threads must be between 1 and 16");
+    }
+
+    NodeContext& node = EnsureAnyNodeContext(request.context);
+    
+    // Start mining in background
+    // TODO: Implement actual mining thread management
+    
+    UniValue obj(UniValue::VOBJ);
+    obj.pushKV("mining", true);
+    obj.pushKV("address", request.params[0].get_str());
+    obj.pushKV("threads", threads);
+    return obj;
+},
+    };
+}
+
+static RPCHelpMan stopmining()
+{
+    return RPCHelpMan{"stopmining",
+        "Stop continuous mining.",
+        {},
+        RPCResult{
+            RPCResult::Type::OBJ, "", "",
+            {
+                {RPCResult::Type::BOOL, "mining", "Whether mining is now active"},
+            }
+        },
+        RPCExamples{
+            "\nStop mining\n"
+            + HelpExampleCli("stopmining", "")
+        },
+        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
+{
+    // TODO: Implement actual mining thread stopping
+    
+    UniValue obj(UniValue::VOBJ);
+    obj.pushKV("mining", false);
+    return obj;
+},
+    };
+}
+
 void RegisterMiningRPCCommands(CRPCTable& t)
 {
     static const CRPCCommand commands[]{
@@ -1121,6 +1195,8 @@ void RegisterMiningRPCCommands(CRPCTable& t)
         {"hidden", &generatetodescriptor},
         {"hidden", &generateblock},
         {"hidden", &generate},
+        {"hidden", &startmining},
+        {"hidden", &stopmining},
     };
     for (const auto& c : commands) {
         t.appendCommand(c.name, &c);

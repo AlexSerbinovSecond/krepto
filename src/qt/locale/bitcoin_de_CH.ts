@@ -323,7 +323,7 @@ Das Signieren ist nur mit Adressen vom Typ 'Legacy' möglich.</translation>
         <translation type="unfinished">Betrag</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
+        <source>Enter a Krepto address (e.g. %1)</source>
         <translation type="unfinished">Bitcoin-Adresse eingeben (z.B. %1)</translation>
     </message>
     <message>

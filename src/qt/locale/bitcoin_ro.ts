@@ -296,7 +296,7 @@ Semnarea este posibilă numai cu adrese de tip "legacy".</translation>
         <translation type="unfinished">Sumă</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
+        <source>Enter a Krepto address (e.g. %1)</source>
         <translation type="unfinished">Introduceţi o adresă Bitcoin (de exemplu %1)</translation>
     </message>
     <message>

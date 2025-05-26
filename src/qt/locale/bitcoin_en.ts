@@ -2548,7 +2548,7 @@ If you are receiving this error you should request the merchant provide a BIP21 
     </message>
     <message>
         <location filename="../guiutil.cpp" line="+138"/>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
+        <source>Enter a Krepto address (e.g. %1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

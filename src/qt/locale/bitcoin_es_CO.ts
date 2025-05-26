@@ -323,7 +323,7 @@ Solo es posible firmar con direcciones de tipo "legacy".</translation>
         <translation type="unfinished">Importe</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
+        <source>Enter a Krepto address (e.g. %1)</source>
         <translation type="unfinished">Ingresar una dirección de Bitcoin (por ejemplo, %1)</translation>
     </message>
     <message>

@@ -323,7 +323,7 @@ La signature n'est possible qu'avec les adresses de type "patrimoine".</translat
         <translation type="unfinished">Montant</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
+        <source>Enter a Krepto address (e.g. %1)</source>
         <translation type="unfinished">Saisir une adresse Bitcoin (p. ex. %1)</translation>
     </message>
     <message>

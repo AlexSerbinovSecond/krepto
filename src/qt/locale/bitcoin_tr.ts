@@ -324,7 +324,7 @@ Cüzdan kilidini aç.</translation>
         <translation type="unfinished">Mitar</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
+        <source>Enter a Krepto address (e.g. %1)</source>
         <translation type="unfinished">Bir bitcoin adresi giriniz (örneğin %1)</translation>
     </message>
     <message>

@@ -302,7 +302,7 @@ Försök igen.</translation>
         <translation type="unfinished">Belopp</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
+        <source>Enter a Krepto address (e.g. %1)</source>
         <translation type="unfinished">Ange en Bitcoin-adress (t.ex. %1)</translation>
     </message>
     <message>

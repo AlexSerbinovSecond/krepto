@@ -315,7 +315,7 @@ Signing is only possible with addresses of the type 'legacy'.</source>
         <translation type="unfinished">금액</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
+        <source>Enter a Krepto address (e.g. %1)</source>
         <translation type="unfinished">비트코인 주소를 입력하세요 (예: %1)</translation>
     </message>
     <message>

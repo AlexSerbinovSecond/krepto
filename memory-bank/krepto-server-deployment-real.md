@@ -84,7 +84,11 @@ git status
 ./configure --disable-gui --enable-daemon --disable-tests --disable-bench --enable-debug --enable-wallet
 
 # Компіляція (використовувати кількість ядер сервера)
+<<<<<<< HEAD
 make -j6  # Для 6-ядерного сервера
+=======
+make -j4  # Для 4-ядерного сервера
+>>>>>>> b3d9f9e3731be157b9ea4c2c9879a38bfc6a26fb
 
 # Перевірка збірки
 ls -la src/bitcoind src/bitcoin-cli
@@ -192,7 +196,11 @@ int GetHeight() const {
 nano src/kernel/chainparams.h
 
 # Перекомпілювати
+<<<<<<< HEAD
 make -j6
+=======
+make -j4
+>>>>>>> b3d9f9e3731be157b9ea4c2c9879a38bfc6a26fb
 
 # Перевірити збірку
 ls -la src/bitcoind

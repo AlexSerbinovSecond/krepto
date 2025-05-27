@@ -96,7 +96,7 @@ public:
         consensus.CSVHeight = 419328; // 000000000000000004a1b34462cb8aeebd5799177f7a29cf28f2d1961716b5b5
         consensus.SegwitHeight = 0; // Always active for Krepto (like regtest)
         consensus.MinBIP9WarningHeight = 483840; // segwit activation height + miner confirmation window
-        consensus.powLimit = uint256{"00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"};
+        consensus.powLimit = uint256{"7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"};
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
         consensus.fPowAllowMinDifficultyBlocks = false;
@@ -132,9 +132,9 @@ public:
         m_assumed_blockchain_size = 620;
         m_assumed_chain_state_size = 14;
 
-        genesis = CreateGenesisBlock(1748270717, 663656, 0x1e0ffff0, 1, 5000000000);
+        genesis = CreateGenesisBlock(1748270717, 0, 0x207fffff, 1, 5000000000);
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256{"00000d2843e19d3f61aaf31f1f919a1be17fc1b814d43117f8f8a4b602a559f2"});
+        assert(consensus.hashGenesisBlock == uint256{"5e5d3365087e5962e40030aa9e43231c24f4057ddfbacb069fb19cfc935c23c9"});
         assert(genesis.hashMerkleRoot == uint256{"5976614bb121054435ae20ef7100ecc07f176b54a7bf908493272d716f8409b4"});
 
         // Note that of those which support the service bits prefix, most only support a subset of
@@ -160,7 +160,7 @@ public:
 
         checkpointData = {
             {
-                // Krepto checkpoints will be added as the network grows
+                {0, uint256{"5e5d3365087e5962e40030aa9e43231c24f4057ddfbacb069fb19cfc935c23c9"}}, // Genesis block
             }
         };
 
@@ -680,3 +680,4 @@ std::optional<ChainType> GetNetworkForMagic(const MessageStartChars& message)
     }
     return std::nullopt;
 }
+

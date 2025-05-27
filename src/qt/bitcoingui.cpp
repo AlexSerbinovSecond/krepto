@@ -625,6 +625,9 @@ void BitcoinGUI::createToolBars()
         miningStatusLabel->setStyleSheet("QLabel { color: red; font-weight: bold; }");
         toolbar->addWidget(miningStatusLabel);
         
+        // Initialize mining status
+        updateMiningStatus(false);
+        
         overviewAction->setChecked(true);
 
 #ifdef ENABLE_WALLET
@@ -789,6 +792,9 @@ void BitcoinGUI::addWallet(WalletModel* walletModel)
     enableHistoryAction(privacy);
     const QString display_name = walletModel->getDisplayName();
     m_wallet_selector->addItem(display_name, QVariant::fromValue(walletModel));
+    
+    // Update mining status when wallet is added
+    updateMiningStatus(false);
 }
 
 void BitcoinGUI::removeWallet(WalletModel* walletModel)
@@ -823,6 +829,9 @@ void BitcoinGUI::setCurrentWallet(WalletModel* wallet_model)
         }
     }
     updateWindowTitle();
+    
+    // Update mining status when wallet changes
+    updateMiningStatus(false);
 }
 
 void BitcoinGUI::setCurrentWalletBySelectorIndex(int index)
@@ -856,6 +865,14 @@ void BitcoinGUI::setWalletActionsEnabled(bool enabled)
     openAction->setEnabled(enabled);
     m_close_wallet_action->setEnabled(enabled);
     m_close_all_wallets_action->setEnabled(enabled);
+    
+    // Enable mining actions when wallet is available
+    if (startMiningAction) {
+        startMiningAction->setEnabled(enabled);
+    }
+    if (stopMiningAction) {
+        stopMiningAction->setEnabled(false); // Stop button should be disabled initially
+    }
 }
 
 void BitcoinGUI::createTrayIcon()
@@ -1790,13 +1807,18 @@ void BitcoinGUI::updateMiningStatus(bool mining)
         if (mining) {
             miningStatusLabel->setText(tr("Mining: Active"));
             miningStatusLabel->setStyleSheet("QLabel { color: green; font-weight: bold; }");
-            startMiningAction->setEnabled(false);
-            stopMiningAction->setEnabled(true);
+            if (startMiningAction) startMiningAction->setEnabled(false);
+            if (stopMiningAction) stopMiningAction->setEnabled(true);
         } else {
             miningStatusLabel->setText(tr("Mining: Stopped"));
             miningStatusLabel->setStyleSheet("QLabel { color: red; font-weight: bold; }");
-            startMiningAction->setEnabled(true);
-            stopMiningAction->setEnabled(false);
+            // Only enable start mining if wallet is available
+            bool walletAvailable = false;
+#ifdef ENABLE_WALLET
+            walletAvailable = (walletFrame && walletFrame->currentWalletModel());
+#endif
+            if (startMiningAction) startMiningAction->setEnabled(walletAvailable);
+            if (stopMiningAction) stopMiningAction->setEnabled(false);
         }
     }
 }

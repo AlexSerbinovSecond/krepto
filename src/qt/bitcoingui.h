@@ -163,7 +163,7 @@ private:
     QAction* m_mask_values_action{nullptr};
     QAction* m_migrate_wallet_action{nullptr};
     QMenu* m_migrate_wallet_menu{nullptr};
-    
+
     // Mining actions
     QAction* startMiningAction{nullptr};
     QAction* stopMiningAction{nullptr};

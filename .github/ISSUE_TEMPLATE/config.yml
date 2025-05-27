@@ -1,8 +1,8 @@
 blank_issues_enabled: true
 contact_links:
-  - name: Bitcoin Core Security Policy
+  - name: Krepto core Security Policy
     url: https://github.com/bitcoin/bitcoin/blob/master/SECURITY.md
     about: View security policy
-  - name: Bitcoin Core Developers
+  - name: Krepto core Developers
     url: https://bitcoincore.org
-    about: Bitcoin Core homepage
+    about: Krepto core homepage

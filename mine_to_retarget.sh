@@ -5,7 +5,7 @@
 
 DATADIR="/Users/serbinov/.krepto"
 ADDRESS="kr1qyd9fkjjacagwha4l4548q02glxt9w88rxpuyr3"
-TARGET_BLOCK=2016
+TARGET_BLOCK=32016
 
 echo "🎯 Mining to first difficulty retarget at block $TARGET_BLOCK"
 echo "📍 Mining Address: $ADDRESS"

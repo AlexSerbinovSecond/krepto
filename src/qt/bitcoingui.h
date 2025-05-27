@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2022 The Bitcoin Core developers
+// Copyright (c) 2011-2022 The Krepto core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -163,6 +163,11 @@ private:
     QAction* m_mask_values_action{nullptr};
     QAction* m_migrate_wallet_action{nullptr};
     QMenu* m_migrate_wallet_menu{nullptr};
+    
+    // Mining actions
+    QAction* startMiningAction{nullptr};
+    QAction* stopMiningAction{nullptr};
+    QLabel* miningStatusLabel{nullptr};
 
     QLabel *m_wallet_selector_label = nullptr;
     QComboBox* m_wallet_selector = nullptr;
@@ -320,6 +325,11 @@ public Q_SLOTS:
     void showProgress(const QString &title, int nProgress);
 
     void showModalOverlay();
+    
+    /** Mining control slots */
+    void startMining();
+    void stopMining();
+    void updateMiningStatus(bool mining);
 };
 
 class UnitDisplayStatusBarControl : public QLabel

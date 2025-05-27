@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2016 The Bitcoin Core developers
+# Copyright (c) 2013-2016 The Krepto core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -113,7 +113,7 @@ if BUILD_BITCOIN_CHAINSTATE
 endif
 
 .PHONY: FORCE check-symbols check-security
-# bitcoin core #
+# Krepto core #
 BITCOIN_CORE_H = \
   addresstype.h \
   addrdb.h \

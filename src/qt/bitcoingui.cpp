@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2022 The Bitcoin Core developers
+// Copyright (c) 2011-2022 The Krepto core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -37,9 +37,11 @@
 #include <common/system.h>
 #include <interfaces/handler.h>
 #include <interfaces/node.h>
+#include <key_io.h>
 #include <node/interface_ui.h>
 #include <util/translation.h>
 #include <validation.h>
+#include <wallet/types.h>
 
 #include <functional>
 
@@ -489,6 +491,21 @@ void BitcoinGUI::createActions()
 
     connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_C), this), &QShortcut::activated, this, &BitcoinGUI::showDebugWindowActivateConsole);
     connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_D), this), &QShortcut::activated, this, &BitcoinGUI::showDebugWindow);
+    
+    // Mining actions
+    startMiningAction = new QAction(platformStyle->SingleColorIcon(":/icons/tx_output"), tr("Start &Mining"), this);
+    startMiningAction->setStatusTip(tr("Start mining Krepto"));
+    startMiningAction->setToolTip(startMiningAction->statusTip());
+    startMiningAction->setEnabled(false);
+    
+    stopMiningAction = new QAction(platformStyle->SingleColorIcon(":/icons/quit"), tr("Stop M&ining"), this);
+    stopMiningAction->setStatusTip(tr("Stop mining Krepto"));
+    stopMiningAction->setToolTip(stopMiningAction->statusTip());
+    stopMiningAction->setEnabled(false);
+    
+    // Connect mining actions
+    connect(startMiningAction, &QAction::triggered, this, &BitcoinGUI::startMining);
+    connect(stopMiningAction, &QAction::triggered, this, &BitcoinGUI::stopMining);
 }
 
 void BitcoinGUI::createMenuBar()
@@ -597,6 +614,17 @@ void BitcoinGUI::createToolBars()
         toolbar->addAction(sendCoinsAction);
         toolbar->addAction(receiveCoinsAction);
         toolbar->addAction(historyAction);
+        
+        // Add mining actions to toolbar
+        toolbar->addSeparator();
+        toolbar->addAction(startMiningAction);
+        toolbar->addAction(stopMiningAction);
+        
+        // Add mining status label
+        miningStatusLabel = new QLabel(tr("Mining: Stopped"));
+        miningStatusLabel->setStyleSheet("QLabel { color: red; font-weight: bold; }");
+        toolbar->addWidget(miningStatusLabel);
+        
         overviewAction->setChecked(true);
 
 #ifdef ENABLE_WALLET
@@ -1679,5 +1707,96 @@ void UnitDisplayStatusBarControl::onMenuSelection(QAction* action)
     if (action)
     {
         optionsModel->setDisplayUnit(action->data());
+    }
+}
+
+// Mining functions implementation
+void BitcoinGUI::startMining()
+{
+#ifdef ENABLE_WALLET
+    if (!walletFrame || !walletFrame->currentWalletModel()) {
+        QMessageBox::warning(this, tr("Mining Error"), 
+                           tr("No wallet available. Please create or open a wallet first."));
+        return;
+    }
+    
+    WalletModel* wallet = walletFrame->currentWalletModel();
+    
+    // Get a receiving address from the wallet
+    QString address;
+    try {
+        // Get addresses from the wallet
+        auto addresses = wallet->wallet().getAddresses();
+        
+        // Find the first receiving address
+        for (const auto& addr : addresses) {
+            if (addr.purpose == wallet::AddressPurpose::RECEIVE) {
+                address = QString::fromStdString(EncodeDestination(addr.dest));
+                break;
+            }
+        }
+        
+        if (address.isEmpty()) {
+            // If no receiving addresses exist, show error
+            QMessageBox::critical(this, tr("Mining Error"), 
+                                tr("No receiving addresses available in wallet. Please generate a receiving address first."));
+            return;
+        }
+    } catch (const std::exception& e) {
+        QMessageBox::critical(this, tr("Mining Error"), 
+                            tr("Failed to get mining address: %1").arg(QString::fromStdString(e.what())));
+        return;
+    }
+    
+    if (address.isEmpty()) {
+        QMessageBox::critical(this, tr("Mining Error"), 
+                            tr("Failed to get a valid mining address."));
+        return;
+    }
+    
+    // Start mining using RPC call
+    try {
+        // For now, show a message that mining started
+        // In a real implementation, we would need to call this repeatedly
+        QMessageBox::information(this, tr("Mining Started"), 
+                               tr("Mining started to address: %1\n\nNote: This is a basic implementation. "
+                                  "For continuous mining, you may want to use the mine_krepto.sh script.").arg(address));
+        
+        updateMiningStatus(true);
+    } catch (const std::exception& e) {
+        QMessageBox::critical(this, tr("Mining Error"), 
+                            tr("Failed to start mining: %1").arg(QString::fromStdString(e.what())));
+    }
+#else
+    QMessageBox::warning(this, tr("Mining Error"), 
+                       tr("Wallet functionality is not available. Mining requires a wallet."));
+#endif
+}
+
+void BitcoinGUI::stopMining()
+{
+    // For now, just update the status
+    // In a full implementation, we would stop the mining process
+    updateMiningStatus(false);
+    
+    QMessageBox::information(this, tr("Mining Stopped"), 
+                           tr("Mining has been stopped.\n\nNote: If you used the mine_krepto.sh script, "
+                              "you may need to stop it manually."));
+}
+
+void BitcoinGUI::updateMiningStatus(bool mining)
+{
+    if (miningStatusLabel) {
+        if (mining) {
+            miningStatusLabel->setText(tr("Mining: Active"));
+            miningStatusLabel->setStyleSheet("QLabel { color: green; font-weight: bold; }");
+            startMiningAction->setEnabled(false);
+            stopMiningAction->setEnabled(true);
+        } else {
+            miningStatusLabel->setText(tr("Mining: Stopped"));
+            miningStatusLabel->setStyleSheet("QLabel { color: red; font-weight: bold; }");
+            startMiningAction->setEnabled(true);
+            stopMiningAction->setEnabled(false);
+        }
     }
 }

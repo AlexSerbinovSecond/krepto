@@ -4,7 +4,7 @@
 # This will demonstrate automatic difficulty adjustment
 
 DATADIR="/Users/serbinov/.krepto"
-ADDRESS="kr1qyd9fkjjacagwha4l4548q02glxt9w88rxpuyr3"
+ADDRESS="kr1q6hm2j68ynvtpmvylwnrztmp3j6p6c3fezugjdr"
 TARGET_BLOCK=32016
 
 echo "🎯 Mining to first difficulty retarget at block $TARGET_BLOCK"

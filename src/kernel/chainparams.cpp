@@ -96,10 +96,10 @@ public:
         consensus.CSVHeight = 419328; // 000000000000000004a1b34462cb8aeebd5799177f7a29cf28f2d1961716b5b5
         consensus.SegwitHeight = 0; // Always active for Krepto (like regtest)
         consensus.MinBIP9WarningHeight = 483840; // segwit activation height + miner confirmation window
-        consensus.powLimit = uint256{"00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"};
+        consensus.powLimit = uint256{"7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"};
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
-        consensus.fPowAllowMinDifficultyBlocks = false;
+        consensus.fPowAllowMinDifficultyBlocks = true; // Allow low difficulty for Krepto mainnet
         consensus.enforce_BIP94 = false;
         consensus.fPowNoRetargeting = false;
         consensus.nRuleChangeActivationThreshold = 1815; // 90% of 2016
@@ -115,8 +115,8 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TAPROOT].nTimeout = 1628640000; // August 11th, 2021
         consensus.vDeployments[Consensus::DEPLOYMENT_TAPROOT].min_activation_height = 709632; // Approximately November 12th, 2021
 
-        consensus.nMinimumChainWork = uint256{"000000000000000000000000000000000000000088e186b70e0862c193ec44d6"};
-        consensus.defaultAssumeValid = uint256{"000000000000000000011c5890365bdbe5d25b97ce0057589acaef4f1a57263f"}; // 856760
+        consensus.nMinimumChainWork = uint256{}; // No minimum work for new Krepto network
+        consensus.defaultAssumeValid = uint256{}; // No assume valid for new Krepto network
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.
@@ -129,12 +129,12 @@ public:
         pchMessageStart[3] = 0x50; // P
         nDefaultPort = 12345;
         nPruneAfterHeight = 100000;
-        m_assumed_blockchain_size = 620;
+        m_assumed_blockchain_size = 1;
         m_assumed_chain_state_size = 14;
 
-        genesis = CreateGenesisBlock(1748270717, 663656, 0x1e0ffff0, 1, 5000000000);
+        genesis = CreateGenesisBlock(1748270717, 0, 0x207fffff, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256{"00000d2843e19d3f61aaf31f1f919a1be17fc1b814d43117f8f8a4b602a559f2"});
+        assert(consensus.hashGenesisBlock == uint256{"5e5d3365087e5962e40030aa9e43231c24f4057ddfbacb069fb19cfc935c23c9"});
         assert(genesis.hashMerkleRoot == uint256{"5976614bb121054435ae20ef7100ecc07f176b54a7bf908493272d716f8409b4"});
 
         // Note that of those which support the service bits prefix, most only support a subset of
@@ -142,8 +142,8 @@ public:
         // This is fine at runtime as we'll fall back to using them as an addrfetch if they don't support the
         // service bits we want, but we should get them updated to support all service bits wanted by any
         // release ASAP to avoid it where possible.
-        // Krepto seed nodes - currently empty, will be populated when seed nodes are available
-        // vSeeds.emplace_back("seed.krepto.org."); // Main Krepto seed node
+        // Krepto seed nodes
+        vSeeds.emplace_back("164.68.117.90"); // Main Krepto seed node
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,45); // Krepto addresses start with 'K'
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,50); // Krepto script addresses start with 'M'

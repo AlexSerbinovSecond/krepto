@@ -242,7 +242,7 @@ void MiningDialog::stopMining()
 void MiningDialog::simulateMining()
 {
     // Real mining using RPC generatetoaddress command
-    logMessage(tr("Starting real mining process..."));
+    logMessage(tr("Starting mining process..."));
     
     QTimer *miningTimer = new QTimer(this);
     connect(miningTimer, &QTimer::timeout, [this, miningTimer]() {

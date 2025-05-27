@@ -24,6 +24,8 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QJsonParseError>
+#include <random>
+#include <chrono>
 
 MiningDialog::MiningDialog(QWidget *parent) :
     QDialog(parent),
@@ -277,22 +279,40 @@ void MiningDialog::simulateMining()
             return;
         }
         
-        // Execute real mining command via RPC
+        // Execute real mining command via RPC with randomization
         logMessage(tr("⛏️  Attempting to mine 1 block to address: %1").arg(miningAddress));
         
-        // Use QProcess to execute bitcoin-cli command
-        QProcess *process = new QProcess(this);
-        QString program = "./src/bitcoin-cli";
-        QStringList arguments;
-        arguments << "-datadir=/Users/serbinov/.krepto"
-                  << "-rpcport=12347"
-                  << "generatetoaddress"
-                  << "1"
-                  << miningAddress
-                  << "1000000"; // Max tries per block
+        // Add randomization to prevent parallel mining conflicts
+        // Generate random max_tries between 500,000 and 2,000,000
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        std::uniform_int_distribution<> tries_dist(500000, 2000000);
+        int randomMaxTries = tries_dist(gen);
+        
+        // Add random delay between 0-5 seconds to stagger mining attempts
+        std::uniform_int_distribution<> delay_dist(0, 5000);
+        int randomDelay = delay_dist(gen);
+        
+        logMessage(tr("🎲 Using randomized parameters: max_tries=%1, delay=%2ms")
+                  .arg(randomMaxTries).arg(randomDelay));
+        
+        // Apply random delay before starting
+        QTimer::singleShot(randomDelay, [this, miningAddress, randomMaxTries]() {
+            if (!isMining) return;
+            
+            // Use QProcess to execute bitcoin-cli command
+            QProcess *process = new QProcess(this);
+            QString program = "./src/bitcoin-cli";
+            QStringList arguments;
+            arguments << "-datadir=/Users/serbinov/.krepto"
+                      << "-rpcport=12347"
+                      << "generatetoaddress"
+                      << "1"
+                      << miningAddress
+                      << QString::number(randomMaxTries); // Randomized max tries
         
         connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-                [this, process, miningAddress](int exitCode, QProcess::ExitStatus exitStatus) {
+                [this, process, miningAddress, randomMaxTries](int exitCode, QProcess::ExitStatus exitStatus) {
             QString output = process->readAllStandardOutput();
             QString error = process->readAllStandardError();
             
@@ -305,7 +325,7 @@ void MiningDialog::simulateMining()
                     QJsonArray blocks = doc.array();
                     if (blocks.size() > 0) {
                         blocksFound++;
-                        totalAttempts += 1000000; // Approximate attempts
+                        totalAttempts += randomMaxTries; // Use actual randomized attempts
                         
                         QString blockHash = blocks[0].toString();
                         logMessage(tr(""));
@@ -330,18 +350,19 @@ void MiningDialog::simulateMining()
             }
             
             // Update hash rate (approximate)
-            currentHashRate = 1000000; // Approximate hashes per attempt
+            currentHashRate = randomMaxTries; // Use actual randomized attempts
             hashCount++;
             
             process->deleteLater();
         });
         
-        process->start(program, arguments);
-        
-        if (!process->waitForStarted()) {
-            logMessage(tr("ERROR: Failed to start mining process"));
-            stopMining();
-        }
+            process->start(program, arguments);
+            
+            if (!process->waitForStarted()) {
+                logMessage(tr("ERROR: Failed to start mining process"));
+                stopMining();
+            }
+        });
     });
     
     miningTimer->start(10000); // Try mining every 10 seconds

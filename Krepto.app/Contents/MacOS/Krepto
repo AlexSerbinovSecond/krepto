@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Set Krepto data directory
+KREPTO_DATADIR="$HOME/.krepto"
+
+# Create datadir if it doesn't exist
+mkdir -p "$KREPTO_DATADIR"
+
+# Copy default config if it doesn't exist
+if [ ! -f "$KREPTO_DATADIR/bitcoin.conf" ]; then
+    cp "$SCRIPT_DIR/../Resources/bitcoin.conf" "$KREPTO_DATADIR/" 2>/dev/null || true
+fi
+
+# Launch Krepto with correct datadir
+exec "$SCRIPT_DIR/bitcoin-qt" -datadir="$KREPTO_DATADIR" "$@"

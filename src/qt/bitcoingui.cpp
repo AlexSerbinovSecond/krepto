@@ -7,6 +7,7 @@
 #include <qt/bitcoingui.h>
 
 #include <qt/bitcoinunits.h>
+#include <qt/miningdialog.h>
 #include <qt/clientmodel.h>
 #include <qt/createwalletdialog.h>
 #include <qt/guiconstants.h>
@@ -503,9 +504,14 @@ void BitcoinGUI::createActions()
     stopMiningAction->setToolTip(stopMiningAction->statusTip());
     stopMiningAction->setEnabled(false);
     
+    showMiningDialogAction = new QAction(platformStyle->SingleColorIcon(":/icons/tx_output"), tr("Mining &Console"), this);
+    showMiningDialogAction->setStatusTip(tr("Show mining console with detailed logs"));
+    showMiningDialogAction->setToolTip(showMiningDialogAction->statusTip());
+    
     // Connect mining actions
     connect(startMiningAction, &QAction::triggered, this, &BitcoinGUI::startMining);
     connect(stopMiningAction, &QAction::triggered, this, &BitcoinGUI::stopMining);
+    connect(showMiningDialogAction, &QAction::triggered, this, &BitcoinGUI::showMiningDialog);
 }
 
 void BitcoinGUI::createMenuBar()
@@ -544,6 +550,13 @@ void BitcoinGUI::createMenuBar()
         settings->addSeparator();
     }
     settings->addAction(optionsAction);
+    
+    // Mining menu
+    QMenu *mining = appMenuBar->addMenu(tr("&Mining"));
+    mining->addAction(startMiningAction);
+    mining->addAction(stopMiningAction);
+    mining->addSeparator();
+    mining->addAction(showMiningDialogAction);
 
     QMenu* window_menu = appMenuBar->addMenu(tr("&Window"));
 
@@ -619,6 +632,7 @@ void BitcoinGUI::createToolBars()
         toolbar->addSeparator();
         toolbar->addAction(startMiningAction);
         toolbar->addAction(stopMiningAction);
+        toolbar->addAction(showMiningDialogAction);
         
         // Add mining status label
         miningStatusLabel = new QLabel(tr("Mining: Stopped"));
@@ -1737,52 +1751,14 @@ void BitcoinGUI::startMining()
         return;
     }
     
-    WalletModel* wallet = walletFrame->currentWalletModel();
-    
-    // Get a receiving address from the wallet
-    QString address;
-    try {
-        // Get addresses from the wallet
-        auto addresses = wallet->wallet().getAddresses();
-        
-        // Find the first receiving address
-        for (const auto& addr : addresses) {
-            if (addr.purpose == wallet::AddressPurpose::RECEIVE) {
-                address = QString::fromStdString(EncodeDestination(addr.dest));
-                break;
-            }
-        }
-        
-        if (address.isEmpty()) {
-            // If no receiving addresses exist, show error
-            QMessageBox::critical(this, tr("Mining Error"), 
-                                tr("No receiving addresses available in wallet. Please generate a receiving address first."));
-            return;
-        }
-    } catch (const std::exception& e) {
-        QMessageBox::critical(this, tr("Mining Error"), 
-                            tr("Failed to get mining address: %1").arg(QString::fromStdString(e.what())));
-        return;
+    // Ensure mining dialog exists
+    if (!miningDialog) {
+        showMiningDialog();
     }
     
-    if (address.isEmpty()) {
-        QMessageBox::critical(this, tr("Mining Error"), 
-                            tr("Failed to get a valid mining address."));
-        return;
-    }
-    
-    // Start mining using RPC call
-    try {
-        // For now, show a message that mining started
-        // In a real implementation, we would need to call this repeatedly
-        QMessageBox::information(this, tr("Mining Started"), 
-                               tr("Mining started to address: %1\n\nNote: This is a basic implementation. "
-                                  "For continuous mining, you may want to use the mine_krepto.sh script.").arg(address));
-        
-        updateMiningStatus(true);
-    } catch (const std::exception& e) {
-        QMessageBox::critical(this, tr("Mining Error"), 
-                            tr("Failed to start mining: %1").arg(QString::fromStdString(e.what())));
+    // Start mining through dialog
+    if (miningDialog) {
+        miningDialog->startMining();
     }
 #else
     QMessageBox::warning(this, tr("Mining Error"), 
@@ -1792,13 +1768,40 @@ void BitcoinGUI::startMining()
 
 void BitcoinGUI::stopMining()
 {
-    // For now, just update the status
-    // In a full implementation, we would stop the mining process
-    updateMiningStatus(false);
+    // Ensure mining dialog exists
+    if (!miningDialog) {
+        showMiningDialog();
+    }
     
-    QMessageBox::information(this, tr("Mining Stopped"), 
-                           tr("Mining has been stopped.\n\nNote: If you used the mine_krepto.sh script, "
-                              "you may need to stop it manually."));
+    // Stop mining through dialog
+    if (miningDialog) {
+        miningDialog->stopMining();
+    }
+}
+
+void BitcoinGUI::showMiningDialog()
+{
+    if (!miningDialog) {
+        miningDialog = new MiningDialog(this);
+        miningDialog->setClientModel(clientModel);
+#ifdef ENABLE_WALLET
+        if (walletFrame && walletFrame->currentWalletModel()) {
+            miningDialog->setWalletModel(walletFrame->currentWalletModel());
+        }
+#endif
+        
+        // Connect signals for state synchronization
+        connect(miningDialog, &MiningDialog::miningStarted, this, [this]() {
+            updateMiningStatus(true);
+        });
+        connect(miningDialog, &MiningDialog::miningStopped, this, [this]() {
+            updateMiningStatus(false);
+        });
+        
+        // No need to reconnect actions - they work through the main GUI methods
+    }
+    
+    GUIUtil::bringToFront(miningDialog);
 }
 
 void BitcoinGUI::updateMiningStatus(bool mining)
@@ -1820,5 +1823,10 @@ void BitcoinGUI::updateMiningStatus(bool mining)
             if (startMiningAction) startMiningAction->setEnabled(walletAvailable);
             if (stopMiningAction) stopMiningAction->setEnabled(false);
         }
+    }
+    
+    // Sync mining dialog state if it exists
+    if (miningDialog) {
+        miningDialog->syncMiningState(mining);
     }
 }

@@ -39,6 +39,7 @@ class WalletFrame;
 class WalletModel;
 class HelpMessageDialog;
 class ModalOverlay;
+class MiningDialog;
 enum class SynchronizationState;
 
 namespace interfaces {
@@ -167,6 +168,7 @@ private:
     // Mining actions
     QAction* startMiningAction{nullptr};
     QAction* stopMiningAction{nullptr};
+    QAction* showMiningDialogAction{nullptr};
     QLabel* miningStatusLabel{nullptr};
 
     QLabel *m_wallet_selector_label = nullptr;
@@ -178,6 +180,7 @@ private:
     RPCConsole* rpcConsole = nullptr;
     HelpMessageDialog* helpMessageDialog = nullptr;
     ModalOverlay* modalOverlay = nullptr;
+    MiningDialog* miningDialog = nullptr;
 
     QMenu* m_network_context_menu = new QMenu(this);
 
@@ -329,6 +332,7 @@ public Q_SLOTS:
     /** Mining control slots */
     void startMining();
     void stopMining();
+    void showMiningDialog();
     void updateMiningStatus(bool mining);
 };
 

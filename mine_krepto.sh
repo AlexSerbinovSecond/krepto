@@ -4,7 +4,7 @@
 # Usage: ./mine_krepto.sh [address] [blocks_per_batch]
 
 # Default values
-DEFAULT_ADDRESS="kr1qyd9fkjjacagwha4l4548q02glxt9w88rxpuyr3"
+DEFAULT_ADDRESS="kr1qgerhx74twe0slh4vh3evdv6evp5r5lng4h4thh"
 DEFAULT_BLOCKS_PER_BATCH=1
 DEFAULT_MAX_TRIES=10000000
 

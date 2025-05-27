@@ -475,45 +475,7 @@ cat > /home/krepto/logrotate.conf << 'EOF'
 EOF
 ```
 
-## 🔧 КРОК 8: НАЛАШТУВАННЯ БЕЗПЕКИ
 
-### 8.1 SSH Безпека
-```bash
-# Змінити SSH порт (опціонально)
-sudo sed -i 's/#Port 22/Port 2222/' /etc/ssh/sshd_config
-
-# Заборонити root login
-sudo sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
-
-# Перезапустити SSH
-sudo systemctl restart sshd
-```
-
-### 8.2 Fail2Ban для Захисту
-```bash
-# Встановити fail2ban
-sudo apt install -y fail2ban  # Ubuntu/Debian
-# sudo yum install -y fail2ban  # CentOS/RHEL
-
-# Створити конфігурацію для Krepto
-sudo cat > /etc/fail2ban/jail.local << 'EOF'
-[DEFAULT]
-bantime = 3600
-findtime = 600
-maxretry = 5
-
-[sshd]
-enabled = true
-port = ssh
-filter = sshd
-logpath = /var/log/auth.log
-maxretry = 3
-EOF
-
-# Запустити fail2ban
-sudo systemctl enable fail2ban
-sudo systemctl start fail2ban
-```
 
 ## ✅ КРОК 9: ПЕРЕВІРКА ТА ТЕСТУВАННЯ
 

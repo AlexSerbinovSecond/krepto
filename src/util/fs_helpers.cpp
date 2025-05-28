@@ -197,6 +197,7 @@ static bool CleanupStaleLockFile(const fs::path& lockfile_path)
         
     } catch (const std::exception& e) {
         // Invalid PID in lock file, remove it
+        (void)e; // Suppress unused variable warning
         LogPrintf("Invalid PID in lock file, removing: %s\n", fs::PathToString(lockfile_path));
         std::error_code ec;
         fs::remove(lockfile_path, ec);

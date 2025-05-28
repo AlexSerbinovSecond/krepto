@@ -145,7 +145,7 @@ jobs:
         }
         
         # Create configuration file
-        @"
+        $configContent = @"
 # Krepto Configuration File
 # Network settings
 port=12345
@@ -164,10 +164,11 @@ txindex=1
 rpcuser=kreptouser
 rpcpassword=kreptopass123
 rpcallowip=127.0.0.1
-"@ | Out-File -FilePath "output\bitcoin.conf" -Encoding UTF8
+"@
+        $configContent | Out-File -FilePath "output\bitcoin.conf" -Encoding UTF8
         
         # Create README
-        @"
+        $readmeContent = @"
 Krepto Windows GUI Distribution
 ==============================
 
@@ -204,10 +205,11 @@ System Requirements:
 For more information, visit: https://krepto.org
 Built with Bitcoin Core Qt GUI technology.
 Built on: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
-"@ | Out-File -FilePath "output\README.txt" -Encoding UTF8
+"@
+        $readmeContent | Out-File -FilePath "output\README.txt" -Encoding UTF8
         
         # Create batch file
-        @"
+        $batchContent = @"
 @echo off
 echo Starting Krepto GUI...
 echo.
@@ -216,7 +218,8 @@ echo Port: 12345
 echo.
 krepto-qt.exe
 pause
-"@ | Out-File -FilePath "output\Start-Krepto-GUI.bat" -Encoding ASCII
+"@
+        $batchContent | Out-File -FilePath "output\Start-Krepto-GUI.bat" -Encoding ASCII
         
         Write-Host "✅ Packaging completed"
       shell: powershell
@@ -236,12 +239,13 @@ pause
         Write-Host "SHA256: $($zipHash.Hash)"
         
         # Save info for release
-        @"
+        $buildInfo = @"
         Package: $zipFile
         Size: $zipSize MB
         SHA256: $($zipHash.Hash)
         Built: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
-        "@ | Out-File -FilePath "build-info.txt" -Encoding UTF8
+        "@
+        $buildInfo | Out-File -FilePath "build-info.txt" -Encoding UTF8
       shell: powershell
     
     - name: Upload artifacts

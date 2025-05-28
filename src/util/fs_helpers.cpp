@@ -20,6 +20,7 @@
 #include <string>
 #include <system_error>
 #include <utility>
+#include <algorithm>
 
 #ifndef WIN32
 // for posix_fallocate, in configure.ac we check if it is present after this
@@ -36,9 +37,12 @@
 #include <fcntl.h>
 #include <sys/resource.h>
 #include <unistd.h>
+#include <signal.h>
 #else
 #include <io.h> /* For _get_osfhandle, _chsize */
 #include <shlobj.h> /* For SHGetSpecialFolderPathW */
+#include <tlhelp32.h>
+#include <psapi.h>
 #endif // WIN32
 
 /** Mutex to protect dir_locks. */
@@ -49,6 +53,157 @@ static GlobalMutex cs_dir_locks;
  * is called.
  */
 static std::map<std::string, std::unique_ptr<fsbridge::FileLock>> dir_locks GUARDED_BY(cs_dir_locks);
+
+#ifndef WIN32
+/**
+ * Check if a process with given PID is running and is a Krepto process
+ * @param pid Process ID to check
+ * @return true if process exists and appears to be Krepto, false otherwise
+ */
+static bool IsKreptoProcessRunning(pid_t pid)
+{
+    // Check if process exists
+    if (kill(pid, 0) != 0) {
+        return false; // Process doesn't exist
+    }
+    
+#ifdef __linux__
+    // Try to get process name to verify it's actually Krepto (Linux)
+    char proc_path[256];
+    snprintf(proc_path, sizeof(proc_path), "/proc/%d/comm", pid);
+    
+    std::ifstream comm_file(proc_path);
+    if (comm_file.is_open()) {
+        std::string process_name;
+        std::getline(comm_file, process_name);
+        
+        // Check if it's one of our Krepto processes
+        return (process_name.find("krepto") != std::string::npos ||
+                process_name.find("bitcoin") != std::string::npos ||
+                process_name.find("kryptod") != std::string::npos ||
+                process_name.find("bitcoind") != std::string::npos);
+    }
+#elif defined(__APPLE__)
+    // macOS approach using ps command
+    char cmd[256];
+    snprintf(cmd, sizeof(cmd), "ps -p %d -o comm= 2>/dev/null", pid);
+    
+    FILE* pipe = popen(cmd, "r");
+    if (pipe) {
+        char process_name[256];
+        if (fgets(process_name, sizeof(process_name), pipe)) {
+            pclose(pipe);
+            
+            // Remove newline and check if it's one of our Krepto processes
+            std::string name(process_name);
+            name.erase(name.find_last_not_of(" \n\r\t") + 1);
+            
+            return (name.find("krepto") != std::string::npos ||
+                    name.find("bitcoin") != std::string::npos ||
+                    name.find("kryptod") != std::string::npos ||
+                    name.find("bitcoind") != std::string::npos ||
+                    name.find("Krepto") != std::string::npos);
+        }
+        pclose(pipe);
+    }
+#endif
+    
+    // If we can't read the process name, assume it might be our process
+    return true;
+}
+#else
+/**
+ * Check if a process with given PID is running and is a Krepto process (Windows)
+ */
+static bool IsKreptoProcessRunning(DWORD pid)
+{
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+    if (hProcess == NULL) {
+        return false; // Process doesn't exist or can't access it
+    }
+    
+    // Get process name
+    char processName[MAX_PATH];
+    if (GetModuleBaseNameA(hProcess, NULL, processName, sizeof(processName))) {
+        CloseHandle(hProcess);
+        
+        // Check if it's one of our Krepto processes
+        std::string name(processName);
+        std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+        return (name.find("krepto") != std::string::npos ||
+                name.find("bitcoin") != std::string::npos);
+    }
+    
+    CloseHandle(hProcess);
+    return true; // If we can't get the name, assume it might be our process
+}
+#endif
+
+/**
+ * Try to clean up stale lock file by checking if the process that created it is still running
+ * @param lockfile_path Path to the lock file
+ * @return true if lock file was cleaned up or doesn't exist, false if active process found
+ */
+static bool CleanupStaleLockFile(const fs::path& lockfile_path)
+{
+    if (!fs::exists(lockfile_path)) {
+        return true; // No lock file, nothing to clean
+    }
+    
+    // Read PID from lock file if it exists
+    std::ifstream pidfile(lockfile_path);
+    if (!pidfile.is_open()) {
+        // Can't read lock file, try to remove it
+        std::error_code ec;
+        fs::remove(lockfile_path, ec);
+        return !ec;
+    }
+    
+    std::string line;
+    if (!std::getline(pidfile, line) || line.empty()) {
+        pidfile.close();
+        // Empty or invalid lock file, remove it
+        std::error_code ec;
+        fs::remove(lockfile_path, ec);
+        return !ec;
+    }
+    
+    pidfile.close();
+    
+    try {
+#ifndef WIN32
+        pid_t pid = std::stoi(line);
+        if (!IsKreptoProcessRunning(pid)) {
+            // Process is not running, safe to remove lock file
+            LogPrintf("Removing stale lock file (PID %d not running): %s\n", pid, fs::PathToString(lockfile_path));
+            std::error_code ec;
+            fs::remove(lockfile_path, ec);
+            return !ec;
+        }
+#else
+        DWORD pid = std::stoul(line);
+        if (!IsKreptoProcessRunning(pid)) {
+            // Process is not running, safe to remove lock file
+            LogPrintf("Removing stale lock file (PID %lu not running): %s\n", pid, fs::PathToString(lockfile_path));
+            std::error_code ec;
+            fs::remove(lockfile_path, ec);
+            return !ec;
+        }
+#endif
+        
+        // Process is still running
+        LogPrintf("Lock file belongs to running process (PID %s): %s\n", line, fs::PathToString(lockfile_path));
+        return false;
+        
+    } catch (const std::exception& e) {
+        // Invalid PID in lock file, remove it
+        LogPrintf("Invalid PID in lock file, removing: %s\n", fs::PathToString(lockfile_path));
+        std::error_code ec;
+        fs::remove(lockfile_path, ec);
+        return !ec;
+    }
+}
+
 namespace util {
 LockResult LockDirectory(const fs::path& directory, const fs::path& lockfile_name, bool probe_only)
 {
@@ -66,18 +221,42 @@ LockResult LockDirectory(const fs::path& directory, const fs::path& lockfile_nam
     } else {
         return LockResult::ErrorWrite;
     }
+    
     auto lock = std::make_unique<fsbridge::FileLock>(pathLockFile);
     if (!lock->TryLock()) {
-        LogError("Error while attempting to lock directory %s: %s\n", fs::PathToString(directory), lock->GetReason());
-        return LockResult::ErrorLock;
+        // Lock failed, try to clean up stale lock file
+        if (CleanupStaleLockFile(pathLockFile)) {
+            // Successfully cleaned up stale lock, try locking again
+            lock = std::make_unique<fsbridge::FileLock>(pathLockFile);
+            if (!lock->TryLock()) {
+                LogError("Error while attempting to lock directory %s: %s\n", fs::PathToString(directory), lock->GetReason());
+                return LockResult::ErrorLock;
+            }
+        } else {
+            LogError("Error while attempting to lock directory %s: %s\n", fs::PathToString(directory), lock->GetReason());
+            return LockResult::ErrorLock;
+        }
     }
+    
+    // Write our PID to the lock file for future reference
     if (!probe_only) {
+        std::ofstream pidfile(pathLockFile);
+        if (pidfile.is_open()) {
+#ifndef WIN32
+            pidfile << getpid() << std::endl;
+#else
+            pidfile << GetCurrentProcessId() << std::endl;
+#endif
+            pidfile.close();
+        }
+        
         // Lock successful and we're not just probing, put it into the map
         dir_locks.emplace(fs::PathToString(pathLockFile), std::move(lock));
     }
     return LockResult::Success;
 }
 } // namespace util
+
 void UnlockDirectory(const fs::path& directory, const fs::path& lockfile_name)
 {
     LOCK(cs_dir_locks);

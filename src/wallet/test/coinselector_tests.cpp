@@ -1290,7 +1290,7 @@ BOOST_AUTO_TEST_CASE(coin_grinder_tests)
             add_coin(available_coins, wallet, CAmount(1 * COIN), CFeeRate(5000), 144, false, 0, true, 1000);
             add_coin(available_coins, wallet, CAmount(1 * COIN), CFeeRate(5000), 144, false, 0, true, 1000);
             for (int j = 0; j < 100; ++j) {
-                // make a 100 unique coins only differing by one sat
+                // make a 100 unique coins only differing by one kat
                 add_coin(available_coins, wallet, CAmount(0.01 * COIN + j), CFeeRate(5000), 144, false, 0, true, 110);
             }
             return available_coins;

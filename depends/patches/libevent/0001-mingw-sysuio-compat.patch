@@ -1,0 +1,18 @@
+--- a/evutil.c
++++ b/evutil.c
+@@ -60,7 +60,15 @@
+ #include <sys/stat.h>
+ #endif
+ 
++#if (defined(__MINGW32__) || defined(_WIN32)) && !defined(SYS_UIO_H)
++#define SYS_UIO_H
++struct iovec {
++    void *iov_base; /* Base address. */
++    size_t iov_len; /* Length. */
++};
++#else
+ #include <sys/uio.h>
++#endif
+ 
+ #include "event2/event-config.h"
+ #include "event2/util.h"

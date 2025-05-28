@@ -6,12 +6,13 @@ echo "============================================="
 # Список робочих seed нод
 NODES=(
     "164.68.117.90:12345"
+    "5.189.133.204:12345"
 )
 
 WORKING_NODES=0
 TOTAL_NODES=${#NODES[@]}
 
-echo "Testing $TOTAL_NODES seed node..."
+echo "Testing $TOTAL_NODES seed nodes..."
 echo ""
 
 for node in "${NODES[@]}"; do

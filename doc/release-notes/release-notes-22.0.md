@@ -394,7 +394,7 @@ A detailed list of changes in this version follows. To keep the list to a manage
 - bitcoin/bitcoin#21574 Drop JSONRPCRequest constructors after #21366 (ryanofsky)
 - bitcoin/bitcoin#21666 Miscellaneous external signer changes (fanquake)
 - bitcoin/bitcoin#21759 Document coin selection code (glozow)
-- bitcoin/bitcoin#21786 Ensure sat/vB feerates are in range (mantissa of 3) (jonatack)
+- bitcoin/bitcoin#21786 Ensure kat/vB feerates are in range (mantissa of 3) (jonatack)
 - bitcoin/bitcoin#21944 Fix issues when `walletdir` is root directory (prayank23)
 - bitcoin/bitcoin#22042 Replace size/weight estimate tuple with struct for named fields (instagibbs)
 - bitcoin/bitcoin#22051 Basic Taproot derivation support for descriptors (sipa)

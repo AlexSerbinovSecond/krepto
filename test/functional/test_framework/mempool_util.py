@@ -27,7 +27,7 @@ def fill_mempool(test_framework, node):
    -maxmempool=5.
     It will not ensure mempools become synced as it
     is based on a single node and assumes -minrelaytxfee
-    is 1 sat/vbyte.
+    is 1 kat/vbyte.
     To avoid unintentional tx dependencies, the mempool filling txs are created with a
     tagged ephemeral miniwallet instance.
     """

@@ -240,7 +240,7 @@ The default value is 4,000,000 WU. (#29523)
   for the resulting transaction to bump the unconfirmed transactions' feerates to the specified feerate. (#28979)
 
 - In RPC `bumpfee`, if a `fee_rate` is specified, the feerate is no longer restricted
-  to following the wallet's incremental feerate of 5 sat/vb. The feerate must still be
+  to following the wallet's incremental feerate of 5 kat/vb. The feerate must still be
   at least the sum of the original fee and the mempool's incremental feerate. (#27969)
 
 GUI Changes

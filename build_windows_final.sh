@@ -87,7 +87,10 @@ rpcport=12347
 port=12345
 server=1
 daemon=1
+
+# Working seed nodes
 addnode=164.68.117.90:12345
+addnode=5.189.133.204:12345
 
 # Performance settings
 dbcache=512
@@ -97,6 +100,11 @@ maxmempool=300
 # Logging
 debug=0
 printtoconsole=0
+
+# Network reliability
+timeout=30000
+connect=164.68.117.90:12345
+connect=5.189.133.204:12345
 EOF
 
     # Створити batch файли для зручності

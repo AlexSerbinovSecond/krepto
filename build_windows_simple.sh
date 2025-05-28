@@ -2,223 +2,250 @@
 
 set -e
 
-echo "🪟 Building Krepto Windows (CLI only)..."
+echo "🪟 Building Krepto Windows CLI Version (Simple)..."
 
-# Перевірити чи встановлений mingw-w64
-if ! command -v x86_64-w64-mingw32-gcc &> /dev/null; then
+# Перевірити наявність mingw
+if ! command -v x86_64-w64-mingw32-g++ &> /dev/null; then
     echo "❌ mingw-w64 not found. Installing..."
-    brew install mingw-w64
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        brew install mingw-w64
+    else
+        echo "Please install mingw-w64 manually"
+        exit 1
+    fi
 fi
 
-echo "✅ mingw-w64 found: $(x86_64-w64-mingw32-gcc --version | head -1)"
+echo "✅ mingw-w64 found: $(x86_64-w64-mingw32-g++ --version | head -1)"
 
-# Очистити попередні збірки
-echo "🧹 Cleaning previous builds..."
-rm -rf depends/x86_64-w64-mingw32
-rm -rf Krepto-Windows-CLI
-rm -f Krepto-Windows-CLI.zip
+# Очистити попередню збірку
+echo "🧹 Cleaning previous build..."
+make clean 2>/dev/null || true
 
-# Збудувати залежності для Windows (без Qt5)
-echo "📦 Building dependencies for Windows (no GUI)..."
+# Очистити depends
+echo "🧹 Cleaning depends..."
 cd depends
-make HOST=x86_64-w64-mingw32 NO_QT=1 -j8
+make clean HOST=x86_64-w64-mingw32 2>/dev/null || true
 cd ..
 
-# Згенерувати configure скрипт
-echo "🔧 Generating configure script..."
+# Збудувати мінімальні залежності для Windows CLI
+echo "📦 Building minimal dependencies for Windows CLI..."
+cd depends
+
+# Збудувати тільки базові залежності без Qt
+make HOST=x86_64-w64-mingw32 -j4 \
+    NO_UPNP=1 \
+    NO_NATPMP=1 \
+    NO_ZMQ=1 \
+    NO_USDT=1 \
+    NO_QT=1
+
+cd ..
+
+# Згенерувати configure
+echo "🔧 Generating configure..."
 ./autogen.sh
 
-# Налаштувати збірку для Windows (без GUI)
-echo "⚙️ Configuring for Windows build (CLI only)..."
+# Налаштувати збірку без GUI
+echo "⚙️ Configuring build without GUI..."
 CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site ./configure \
     --prefix=/ \
+    --host=x86_64-w64-mingw32 \
     --disable-tests \
     --disable-bench \
+    --disable-fuzz-binary \
     --disable-gui \
-    --without-gui
+    --without-natpmp \
+    --without-miniupnpc \
+    --disable-zmq \
+    --disable-debug
 
-# Збудувати Krepto для Windows
-echo "🔨 Building Krepto for Windows..."
-make -j8
+# Збудувати CLI інструменти
+echo "🔨 Building CLI tools..."
+make -j4
 
-# Створити структуру для інсталятора
-echo "📁 Creating installer structure..."
-mkdir -p Krepto-Windows-CLI
-
-# Копіювати виконувані файли
-echo "📋 Copying executables..."
-cp src/bitcoind.exe Krepto-Windows-CLI/kryptod.exe
-cp src/bitcoin-cli.exe Krepto-Windows-CLI/krypto-cli.exe
-cp src/bitcoin-tx.exe Krepto-Windows-CLI/krypto-tx.exe
-cp src/bitcoin-util.exe Krepto-Windows-CLI/krypto-util.exe
-
-# Копіювати необхідні DLL
-echo "📚 Copying required libraries..."
-# Знайти та скопіювати mingw DLL
-MINGW_PATH="/opt/homebrew/Cellar/mingw-w64"
-if [ -d "$MINGW_PATH" ]; then
-    find $MINGW_PATH -name "*.dll" -exec cp {} Krepto-Windows-CLI/ \; 2>/dev/null || true
-fi
-
-# Створити конфігурацію
-echo "⚙️ Creating Krepto configuration..."
-cat > Krepto-Windows-CLI/bitcoin.conf << 'EOF'
-# Krepto Client Configuration
-
-# Network Settings
-port=12345
+# Перевірити результат
+if [ -f "src/bitcoind.exe" ] && [ -f "src/bitcoin-cli.exe" ]; then
+    echo "✅ Build successful!"
+    
+    # Створити директорію для результату
+    mkdir -p Krepto-Windows-CLI-Simple
+    
+    # Копіювати всі виконувані файли з правильними назвами
+    echo "📦 Copying executables with Krepto names..."
+    cp src/bitcoind.exe Krepto-Windows-CLI-Simple/kryptod.exe
+    cp src/bitcoin-cli.exe Krepto-Windows-CLI-Simple/krepto-cli.exe
+    cp src/bitcoin-tx.exe Krepto-Windows-CLI-Simple/krepto-tx.exe
+    cp src/bitcoin-util.exe Krepto-Windows-CLI-Simple/krepto-util.exe
+    cp src/bitcoin-wallet.exe Krepto-Windows-CLI-Simple/krepto-wallet.exe
+    
+    # Копіювати необхідні DLL файли
+    echo "📦 Copying DLL dependencies..."
+    
+    # Знайти та копіювати mingw DLL
+    MINGW_PATH="/opt/homebrew/Cellar/mingw-w64"
+    if [ -d "$MINGW_PATH" ]; then
+        find "$MINGW_PATH" -name "libgcc_s_seh-1.dll" -exec cp {} Krepto-Windows-CLI-Simple/ \; 2>/dev/null || true
+        find "$MINGW_PATH" -name "libstdc++-6.dll" -exec cp {} Krepto-Windows-CLI-Simple/ \; 2>/dev/null || true
+        find "$MINGW_PATH" -name "libwinpthread-1.dll" -exec cp {} Krepto-Windows-CLI-Simple/ \; 2>/dev/null || true
+    fi
+    
+    # Додати конфігурацію
+    cat > Krepto-Windows-CLI-Simple/bitcoin.conf << 'EOF'
+# Krepto Configuration
+rpcuser=kreptouser
+rpcpassword=kreptopass123
 rpcport=12347
-
-# Connection to Seed Node
-addnode=164.68.117.90:12345
-connect=164.68.117.90:12345
-
-# Node Settings
-daemon=1
+port=12345
 server=1
-listen=1
+daemon=1
 
-# RPC Settings
-rpcuser=localuser
-rpcpassword=localpass123
-rpcbind=127.0.0.1
-rpcallowip=127.0.0.1
+# Working seed nodes
+addnode=164.68.117.90:12345
+addnode=5.189.133.204:12345
 
-# Logging
-debug=net
-logips=1
-
-# Performance
+# Performance settings
 dbcache=512
+maxconnections=50
 maxmempool=300
 
-# Force Krepto network (prevent Bitcoin connection)
-onlynet=ipv4
-discover=0
-dnsseed=0
+# Logging
+debug=0
+printtoconsole=0
+
+# Network reliability
+timeout=30000
+connect=164.68.117.90:12345
+connect=5.189.133.204:12345
 EOF
 
-# Створити batch файли для запуску
-echo "📝 Creating batch files..."
-cat > Krepto-Windows-CLI/start-daemon.bat << 'EOF'
+    # Створити batch файли
+    cat > Krepto-Windows-CLI-Simple/start-daemon.bat << 'EOF'
 @echo off
-echo Starting Krepto Daemon...
-kryptod.exe -datadir=%APPDATA%\Krepto
+echo Starting Krepto daemon...
+kryptod.exe -daemon
+echo Daemon started successfully!
+echo Use krepto-cli.exe for commands
 pause
 EOF
 
-cat > Krepto-Windows-CLI/stop-daemon.bat << 'EOF'
+    cat > Krepto-Windows-CLI-Simple/stop-daemon.bat << 'EOF'
 @echo off
-echo Stopping Krepto Daemon...
-krypto-cli.exe -datadir=%APPDATA%\Krepto stop
+echo Stopping Krepto daemon...
+krepto-cli.exe stop
+echo Daemon stopped.
 pause
 EOF
 
-cat > Krepto-Windows-CLI/get-info.bat << 'EOF'
+    cat > Krepto-Windows-CLI-Simple/get-info.bat << 'EOF'
 @echo off
-echo Krepto Network Info:
-krypto-cli.exe -datadir=%APPDATA%\Krepto getblockchaininfo
+echo Getting Krepto blockchain info...
+krepto-cli.exe getblockchaininfo
 echo.
-echo Wallet Info:
-krypto-cli.exe -datadir=%APPDATA%\Krepto getwalletinfo
+echo Getting wallet info...
+krepto-cli.exe getwalletinfo
 pause
 EOF
 
-cat > Krepto-Windows-CLI/start-mining.bat << 'EOF'
+    cat > Krepto-Windows-CLI-Simple/start-mining.bat << 'EOF'
 @echo off
-echo Getting mining address...
-for /f %%i in ('krypto-cli.exe -datadir=%APPDATA%\Krepto getnewaddress') do set ADDR=%%i
-echo Mining to address: %ADDR%
-echo Starting mining (press Ctrl+C to stop)...
-krypto-cli.exe -datadir=%APPDATA%\Krepto generatetoaddress 1000000 %ADDR% 10000000
+echo Starting Krepto mining...
+echo First, let's get a mining address...
+for /f "tokens=*" %%a in ('krepto-cli.exe getnewaddress') do set MINING_ADDRESS=%%a
+echo Mining address: %MINING_ADDRESS%
+echo.
+echo Starting mining to address %MINING_ADDRESS%...
+krepto-cli.exe generatetoaddress 1 %MINING_ADDRESS% 10000000
+echo Mining completed! Check your balance with get-info.bat
 pause
 EOF
 
-# Створити README для Windows
-echo "📝 Creating README for Windows..."
-cat > Krepto-Windows-CLI/README.txt << 'EOF'
+    cat > Krepto-Windows-CLI-Simple/create-wallet.bat << 'EOF'
+@echo off
+echo Creating new Krepto wallet...
+krepto-cli.exe createwallet "default"
+echo Wallet created successfully!
+echo Getting new address...
+krepto-cli.exe getnewaddress
+pause
+EOF
+
+    # Створити README
+    cat > Krepto-Windows-CLI-Simple/README.txt << 'EOF'
 🚀 Krepto - Bitcoin Fork for Windows (CLI Version)
 
-INSTALLATION:
-1. Extract all files to a folder (e.g., C:\Krepto)
-2. Copy bitcoin.conf to %APPDATA%\Krepto\
-3. Run start-daemon.bat to start the daemon
+QUICK START:
+1. Double-click start-daemon.bat to start daemon
+2. Double-click create-wallet.bat to create wallet
+3. Double-click start-mining.bat to mine
 
 EXECUTABLES:
-- kryptod.exe - Main daemon
-- krypto-cli.exe - Command line interface
-- krypto-tx.exe - Transaction tools
-- krypto-util.exe - Utility tools
+- kryptod.exe - Background daemon
+- krepto-cli.exe - Command line interface
+- krepto-tx.exe - Transaction tools
+- krepto-util.exe - Utility tools
+- krepto-wallet.exe - Wallet tools
 
-BATCH FILES:
-- start-daemon.bat - Start Krepto daemon
-- stop-daemon.bat - Stop Krepto daemon
-- get-info.bat - Show network and wallet info
-- start-mining.bat - Start mining Krepto
+BATCH FILES (Double-click to run):
+- start-daemon.bat - Start background daemon
+- stop-daemon.bat - Stop daemon
+- create-wallet.bat - Create new wallet
+- start-mining.bat - Mine blocks
+- get-info.bat - Check status
 
-NETWORK INFO:
-- Krepto uses its own blockchain (not Bitcoin)
-- Connects to seed node: 164.68.117.90:12345
-- Data stored in: %APPDATA%\Krepto\
-- Addresses start with 'K' (legacy) or 'kr1q' (SegWit)
+NETWORK INFORMATION:
+- Network: Krepto mainnet
+- Port: 12345
+- RPC Port: 12347
+- Data Directory: %APPDATA%\Krepto\
+- Seed Nodes: 
+  * 164.68.117.90:12345
+  * 5.189.133.204:12345
 
-FEATURES:
-- Command line mining
-- SegWit support from genesis
-- Fast block generation
-- Compatible with Bitcoin Core RPC
-
-CONFIGURATION:
-- Config file: %APPDATA%\Krepto\bitcoin.conf
-- Logs: %APPDATA%\Krepto\debug.log
-- Network: Krepto mainnet (port 12345)
+ADDRESSES:
+- Legacy addresses start with 'K'
+- SegWit addresses start with 'kr1q'
+- Both types fully supported
 
 MINING:
-1. Run start-daemon.bat
-2. Wait for synchronization
-3. Run start-mining.bat
-4. Enjoy mining Krepto! ⛏️
+- Fast mining (5,400+ blocks/hour)
+- SegWit support from genesis block
+- Use start-mining.bat for easy mining
 
-COMMANDS:
-- krypto-cli.exe getblockchaininfo
-- krypto-cli.exe getwalletinfo
-- krypto-cli.exe getnewaddress
-- krypto-cli.exe generatetoaddress 1 <address> 10000000
+CONFIGURATION:
+- Config file: bitcoin.conf (in this folder)
+- Copy to %APPDATA%\Krepto\ if needed
+- Logs: %APPDATA%\Krepto\debug.log
 
-SUPPORT:
-- Check %APPDATA%\Krepto\debug.log for troubleshooting
-- Ensure port 12345 is not blocked by firewall
-- For help, check the configuration file
-
-Enjoy mining Krepto! 🎉
+Built with ❤️ for Windows users
 EOF
 
-# Перевірити розміри файлів
-echo "📊 File sizes:"
-ls -lh Krepto-Windows-CLI/
-
-# Створити ZIP архів
-echo "📦 Creating ZIP archive..."
-zip -r Krepto-Windows-CLI.zip Krepto-Windows-CLI/
-
-# Показати результат
-echo "✅ Windows CLI build completed successfully!"
-echo "📋 Build info:"
-echo "- Executables: kryptod.exe, krypto-cli.exe, krypto-tx.exe, krypto-util.exe"
-echo "- Batch files: start-daemon.bat, stop-daemon.bat, get-info.bat, start-mining.bat"
-echo "- Configuration: bitcoin.conf included"
-echo "- Documentation: README.txt included"
-echo "- Archive: Krepto-Windows-CLI.zip"
-
-echo ""
-echo "📦 Archive contents:"
-unzip -l Krepto-Windows-CLI.zip
-
-echo ""
-echo "🎯 Next steps:"
-echo "1. Test on Windows VM"
-echo "2. Create GUI version with Docker"
-echo "3. Upload for distribution"
-
-echo ""
-echo "🎊 Krepto Windows CLI build ready for testing!" 
+    # Створити ZIP архів
+    echo "📦 Creating ZIP archive..."
+    zip -r Krepto-Windows-CLI-Simple.zip Krepto-Windows-CLI-Simple/
+    
+    # Показати результат
+    echo ""
+    echo "🎊 SUCCESS! Krepto Windows CLI build completed!"
+    echo ""
+    echo "📊 Build Results:"
+    ls -lh Krepto-Windows-CLI-Simple.zip
+    echo ""
+    echo "📁 Package Contents:"
+    du -sh Krepto-Windows-CLI-Simple/
+    ls -la Krepto-Windows-CLI-Simple/
+    
+    echo ""
+    echo "🎯 Package Features:"
+    echo "✅ All CLI tools with Krepto names"
+    echo "✅ Easy-to-use batch files"
+    echo "✅ Complete mining functionality"
+    echo "✅ Minimal dependencies"
+    echo "✅ Ready for Windows distribution"
+    
+    echo ""
+    echo "🚀 Ready for Windows CLI distribution!"
+    
+else
+    echo "❌ Build failed!"
+    exit 1
+fi 

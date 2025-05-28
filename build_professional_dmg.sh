@@ -128,9 +128,11 @@ cat > Krepto.app/Contents/Resources/bitcoin.conf << 'EOF'
 port=12345
 rpcport=12347
 
-# Connection to Seed Node
+# Connection to Seed Nodes
 addnode=164.68.117.90:12345
+addnode=5.189.133.204:12345
 connect=164.68.117.90:12345
+connect=5.189.133.204:12345
 
 # Node Settings
 daemon=0
@@ -204,58 +206,28 @@ cp -R Krepto.app dmg_temp/
 # Створити symlink на Applications
 ln -s /Applications dmg_temp/Applications
 
-# Створити README з інструкціями
-echo "📝 Creating README for users..."
-cat > dmg_temp/README.txt << 'EOF'
-🚀 Krepto - Bitcoin Fork
-
-INSTALLATION:
-1. Drag Krepto.app to Applications folder
-2. Launch Krepto from Applications
-3. Wait for synchronization with Krepto network
-
-NETWORK INFO:
-- Krepto uses its own blockchain (not Bitcoin)
-- Connects to seed node: 164.68.117.90:12345
-- Data stored in: ~/.krepto/
-- Addresses start with 'K' (legacy) or 'kr1q' (SegWit)
-
-FEATURES:
-- GUI Mining built-in
-- SegWit support from genesis
-- Fast block generation
-- Compatible with Bitcoin Core RPC
-
-SUPPORT:
-- Configuration: ~/.krepto/bitcoin.conf
-- Logs: ~/.krepto/debug.log
-- Network: Krepto mainnet (port 12345)
-
-Enjoy mining Krepto! ⛏️
-EOF
-
-# 🖼️ СТВОРИТИ ФОНОВЕ ЗОБРАЖЕННЯ ДЛЯ DMG
-echo "🖼️ Creating DMG background image..."
+# 🖼️ СТВОРИТИ ФОНОВЕ ЗОБРАЖЕННЯ ДЛЯ DMG З КРАСИВОЮ СТРІЛОЧКОЮ
+echo "🖼️ Creating DMG background image with arrow..."
 cat > create_background.py << 'EOF'
 from PIL import Image, ImageDraw, ImageFont
 import os
 
 # Створити зображення 600x400
 width, height = 600, 400
-img = Image.new('RGB', (width, height), color='#f0f0f0')
+img = Image.new('RGB', (width, height), color='#f8f8f8')
 draw = ImageDraw.Draw(img)
 
 # Градієнт фон
 for y in range(height):
-    color_value = int(240 - (y / height) * 20)
-    color = (color_value, color_value, color_value + 10)
+    color_value = int(248 - (y / height) * 15)
+    color = (color_value, color_value, color_value + 5)
     draw.line([(0, y), (width, y)], fill=color)
 
 # Додати текст інструкції
 try:
     # Спробувати системний шрифт
-    font_large = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 24)
-    font_small = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 16)
+    font_large = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 22)
+    font_small = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 14)
 except:
     # Fallback на default шрифт
     font_large = ImageFont.load_default()
@@ -264,7 +236,7 @@ except:
 # Текст по центру
 text1 = "Drag Krepto to Applications"
 text2 = "to install"
-text_color = '#333333'
+text_color = '#2c2c2c'
 
 # Розрахувати позиції тексту
 bbox1 = draw.textbbox((0, 0), text1, font=font_large)
@@ -274,31 +246,47 @@ text2_width = bbox2[2] - bbox2[0]
 
 x1 = (width - text1_width) // 2
 x2 = (width - text2_width) // 2
-y1 = height // 2 - 40
-y2 = height // 2 - 10
+y1 = height // 2 - 50
+y2 = height // 2 - 25
 
 draw.text((x1, y1), text1, fill=text_color, font=font_large)
 draw.text((x2, y2), text2, fill=text_color, font=font_small)
 
-# Намалювати стрілку
-arrow_y = height // 2 + 30
-arrow_start_x = width // 2 - 50
-arrow_end_x = width // 2 + 50
+# Намалювати красиву стрілку (як у VNC Viewer)
+arrow_y = height // 2 + 20
+arrow_start_x = 200  # Від Krepto app
+arrow_end_x = 400    # До Applications
 arrow_color = '#007AFF'
+arrow_width = 4
 
-# Лінія стрілки
-draw.line([(arrow_start_x, arrow_y), (arrow_end_x, arrow_y)], fill=arrow_color, width=3)
+# Основна лінія стрілки
+draw.line([(arrow_start_x, arrow_y), (arrow_end_x - 15, arrow_y)], fill=arrow_color, width=arrow_width)
 
-# Наконечник стрілки
-draw.polygon([
+# Наконечник стрілки (більший та красивіший)
+arrow_head = [
     (arrow_end_x, arrow_y),
-    (arrow_end_x - 10, arrow_y - 5),
-    (arrow_end_x - 10, arrow_y + 5)
-], fill=arrow_color)
+    (arrow_end_x - 15, arrow_y - 8),
+    (arrow_end_x - 15, arrow_y + 8)
+]
+draw.polygon(arrow_head, fill=arrow_color)
+
+# Додати тінь для стрілки
+shadow_offset = 2
+shadow_color = '#cccccc'
+draw.line([(arrow_start_x + shadow_offset, arrow_y + shadow_offset), 
+          (arrow_end_x - 15 + shadow_offset, arrow_y + shadow_offset)], 
+          fill=shadow_color, width=arrow_width)
+
+shadow_head = [
+    (arrow_end_x + shadow_offset, arrow_y + shadow_offset),
+    (arrow_end_x - 15 + shadow_offset, arrow_y - 8 + shadow_offset),
+    (arrow_end_x - 15 + shadow_offset, arrow_y + 8 + shadow_offset)
+]
+draw.polygon(shadow_head, fill=shadow_color)
 
 # Зберегти зображення
 img.save('dmg_background.png')
-print("Background image created: dmg_background.png")
+print("Background image with arrow created: dmg_background.png")
 EOF
 
 # Запустити Python скрипт для створення фону
@@ -326,14 +314,13 @@ tell application "Finder"
         set arrangement of viewOptions to not arranged
         set icon size of viewOptions to 128
         
-        -- Встановити позиції іконок
-        set position of item "Krepto.app" of container window to {150, 180}
-        set position of item "Applications" of container window to {450, 180}
-        set position of item "README.txt" of container window to {300, 280}
+        -- Встановити позиції іконок (тільки Krepto.app та Applications)
+        set position of item "Krepto.app" of container window to {150, 200}
+        set position of item "Applications" of container window to {450, 200}
         
         -- Встановити фон якщо існує
         try
-            set background picture of viewOptions to file "dmg_background.png" of disk "KreptoInstaller"
+            set background picture of viewOptions to file ".background.png" of disk "KreptoInstaller"
         end try
         
         -- Оновити вікно

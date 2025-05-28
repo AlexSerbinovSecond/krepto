@@ -6,7 +6,7 @@
 	<dict>
 		<key>Resources/bitcoin.conf</key>
 		<data>
-		AfJcU2e19NakFYSwHzD8Lx2FHJI=
+		m9Cc5x7HA2eKObgm8kCNFJMOMBc=
 		</data>
 		<key>Resources/krepto.icns</key>
 		<data>
@@ -311,28 +311,28 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			XCZSpAKfUz6fRT/CLBBYaAm8ykc=
+			DWbmS09bnhjf5t/CtfT7updeL+E=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"5c2652a4029f533e9f453fc22c10586809bcca47"</string>
+			<string>cdhash H"0d66e64b4f5b9e18dfe6dfc2b5f4fbba975e2fe1"</string>
 		</dict>
 		<key>MacOS/krypto-cli</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			fS3RI046Euk73ZPtr9YsaJ3OjWE=
+			fNvr23SmrzhJ0XWK50Fltw7JeBc=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"7d2dd1234e3a12e93bdd93edafd62c689dce8d61"</string>
+			<string>cdhash H"7cdbebdb74a6af3849d1758ae74165b70ec97817"</string>
 		</dict>
 		<key>MacOS/kryptod</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			gk5HfcXQ+xw0wqxY0JGc7DYYLYI=
+			MXvA5kBcneuRU9nrhpmbsBq8qwE=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"824e477dc5d0fb1c34c2ac58d0919cec36182d82"</string>
+			<string>cdhash H"317bc0e6405c9deb9153d9eb86999bb01abcab01"</string>
 		</dict>
 		<key>PlugIns/bearer/libqgenericbearer.dylib</key>
 		<dict>
@@ -536,11 +536,11 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			AfJcU2e19NakFYSwHzD8Lx2FHJI=
+			m9Cc5x7HA2eKObgm8kCNFJMOMBc=
 			</data>
 			<key>hash2</key>
 			<data>
-			RV5YWEejjXIcIrbKM4cKngPhH3Na7m/hv5aaTeJksDc=
+			jiJYKLbkzB8r3uwb/qRwCl0sIDGXZupmwbYcjUyDyOY=
 			</data>
 		</dict>
 		<key>Resources/krepto.icns</key>

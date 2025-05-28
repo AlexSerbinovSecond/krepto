@@ -960,7 +960,7 @@ Podpisovanje je možno le s podedovanimi ("legacy") naslovi.</translation>
     </message>
     <message>
         <source>Can vary +/- %1 katoshi(s) per input.</source>
-        <translation type="unfinished">Lahko se razlikuje za +/- %1 sat na vhod.</translation>
+        <translation type="unfinished">Lahko se razlikuje za +/- %1 kat na vhod.</translation>
     </message>
     <message>
         <source>(no label)</source>

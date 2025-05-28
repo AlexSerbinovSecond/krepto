@@ -27,6 +27,7 @@
     <ClCompile Include="..\..\src\qt\initexecutor.cpp" />
     <ClCompile Include="..\..\src\qt\intro.cpp" />
     <ClCompile Include="..\..\src\qt\modaloverlay.cpp" />
+    <ClCompile Include="..\..\src\qt\miningdialog.cpp" />
     <ClCompile Include="..\..\src\qt\networkstyle.cpp" />
     <ClCompile Include="..\..\src\qt\notificator.cpp" />
     <ClCompile Include="..\..\src\qt\openuridialog.cpp" />
@@ -83,6 +84,7 @@
     <ClCompile Include="$(GeneratedFilesOutDir)\moc\moc_initexecutor.cpp" />
     <ClCompile Include="$(GeneratedFilesOutDir)\moc\moc_intro.cpp" />
     <ClCompile Include="$(GeneratedFilesOutDir)\moc\moc_modaloverlay.cpp" />
+    <ClCompile Include="$(GeneratedFilesOutDir)\moc\moc_miningdialog.cpp" />
     <ClCompile Include="$(GeneratedFilesOutDir)\moc\moc_networkstyle.cpp" />
     <ClCompile Include="$(GeneratedFilesOutDir)\moc\moc_notificator.cpp" />
     <ClCompile Include="$(GeneratedFilesOutDir)\moc\moc_openuridialog.cpp" />

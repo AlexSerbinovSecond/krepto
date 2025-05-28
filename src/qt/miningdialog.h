@@ -51,6 +51,10 @@ private:
     // New methods for internal RPC
     void continueMining();
     void performInternalMining(const QString& miningAddress, int maxTries, int attemptNumber);
+    
+    // New methods for compact logging
+    void updateMiningProgress(int attemptNumber, uint32_t currentNonce, int maxTries);
+    void clearLastLogLine();
 
     // UI components
     QTextEdit *logTextEdit;
@@ -75,6 +79,7 @@ private:
     uint64_t currentNonce;
     int hashCount;
     QString currentMiningAddress; // Store current mining address
+    QString lastProgressLine; // Track last progress line for updating
 
     // Timers
     QTimer *updateTimer;

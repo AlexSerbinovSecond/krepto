@@ -277,16 +277,18 @@ void MiningDialog::continueMining()
         std::uniform_int_distribution<> delay_dist(10, 50); // Very short delay
         int randomDelay = delay_dist(gen);
         
-        // Show mining parameters every 10 attempts
+        // Show mining parameters only every 50 attempts to reduce spam
         static int attemptCounter = 0;
         attemptCounter++;
         
-        if (attemptCounter % 10 == 1) {
-            logMessage(tr("🧠 Adaptive mining parameters (attempt #%1):").arg(attemptCounter));
-            logMessage(tr("   Current difficulty: %1").arg(QString::number(currentDifficulty, 'f', 6)));
-            logMessage(tr("   Adaptive max_tries: %1").arg(adaptiveMaxTries));
-            logMessage(tr("🎲 Using randomized parameters: max_tries=%1, delay=%2ms")
-                      .arg(randomMaxTries).arg(randomDelay));
+        if (attemptCounter % 50 == 1) {
+            logMessage(tr(""));
+            logMessage(tr("🧠 Mining Status Update (Round #%1):").arg((attemptCounter / 50) + 1));
+            logMessage(tr("   Difficulty: %1 | Max tries: %2K | Blocks found: %3")
+                      .arg(QString::number(currentDifficulty, 'f', 6))
+                      .arg(adaptiveMaxTries / 1000)
+                      .arg(blocksFound));
+            logMessage(tr(""));
         }
         
         // Store attempt counter for lambda capture
@@ -312,8 +314,14 @@ void MiningDialog::performInternalMining(const QString& miningAddress, int maxTr
     }
     
     try {
-        // Use internal RPC call instead of external process
-        logMessage(tr("🔨 Mining attempt #%1 with %2 max attempts...").arg(attemptNumber).arg(maxTries));
+        // Generate random starting nonce for display
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        std::uniform_int_distribution<uint32_t> nonce_dist(0, UINT32_MAX);
+        uint32_t startingNonce = nonce_dist(gen);
+        
+        // Update the last line in log with current mining progress
+        updateMiningProgress(attemptNumber, startingNonce, maxTries);
         
         // Prepare RPC parameters
         UniValue params(UniValue::VARR);
@@ -330,20 +338,22 @@ void MiningDialog::performInternalMining(const QString& miningAddress, int maxTr
             totalAttempts += maxTries;
             
             std::string blockHash = result[0].get_str();
+            
+            // Clear the progress line and show success
+            clearLastLogLine();
             logMessage(tr(""));
-            logMessage(tr("*** BLOCK FOUND! ***"));
-            logMessage(tr("✅ Block %1 mined successfully!").arg(blocksFound));
-            logMessage(tr("🔗 Block hash: %1").arg(QString::fromStdString(blockHash)));
-            logMessage(tr("📍 Mined to address: %1").arg(miningAddress));
+            logMessage(tr("*** 🎉 BLOCK FOUND! ***"));
+            logMessage(tr("✅ Block #%1 mined successfully!").arg(blocksFound));
+            logMessage(tr("🔗 Hash: %1").arg(QString::fromStdString(blockHash).left(16) + "..."));
+            logMessage(tr("📊 Total attempts: %1M").arg(QString::number(totalAttempts / 1000000.0, 'f', 1)));
             logMessage(tr(""));
             
             // Get updated blockchain info
             getBlockchainInfo();
         } else {
-            // No block found, but continue mining like the script
+            // No block found, but continue mining
             totalAttempts += maxTries;
-            logMessage(tr("⚠️  Mining attempt #%1 completed but no block found - continuing...").arg(attemptNumber));
-            logMessage(tr("📊 Total attempts so far: %1").arg(totalAttempts));
+            // Don't log anything here - the progress line will be updated by next attempt
         }
         
         // Update hash rate (approximate)
@@ -351,7 +361,62 @@ void MiningDialog::performInternalMining(const QString& miningAddress, int maxTr
         hashCount++;
         
     } catch (const std::exception& e) {
-        logMessage(tr("❌ Internal mining error: %1").arg(QString::fromStdString(e.what())));
+        clearLastLogLine();
+        logMessage(tr("❌ Mining error: %1").arg(QString::fromStdString(e.what())));
+    }
+}
+
+void MiningDialog::updateMiningProgress(int attemptNumber, uint32_t currentNonce, int maxTries)
+{
+    // Clear the last line if it was a progress line
+    clearLastLogLine();
+    
+    // Calculate hash rate in readable format
+    QString hashRateStr;
+    if (maxTries >= 1000000) {
+        hashRateStr = QString::number(maxTries / 1000000.0, 'f', 1) + "M";
+    } else if (maxTries >= 1000) {
+        hashRateStr = QString::number(maxTries / 1000.0, 'f', 0) + "K";
+    } else {
+        hashRateStr = QString::number(maxTries);
+    }
+    
+    // Show current mining progress
+    QString progressMsg = tr("⛏️  Mining... Nonce: %1 | Rate: %2 H/s | Attempt: %3 | Total: %4M")
+                         .arg(QString::number(currentNonce, 16).toUpper().rightJustified(8, '0'))
+                         .arg(hashRateStr)
+                         .arg(attemptNumber)
+                         .arg(QString::number(totalAttempts / 1000000.0, 'f', 1));
+    
+    // Add this as the last line (will be replaced by next update)
+    logMessage(progressMsg);
+    lastProgressLine = progressMsg;
+}
+
+void MiningDialog::clearLastLogLine()
+{
+    if (!lastProgressLine.isEmpty()) {
+        // Get current text
+        QString currentText = logTextEdit->toPlainText();
+        
+        // Find and remove the last progress line
+        int lastIndex = currentText.lastIndexOf(lastProgressLine);
+        if (lastIndex != -1) {
+            // Remove the progress line and its timestamp
+            int lineStart = currentText.lastIndexOf('\n', lastIndex - 1) + 1;
+            if (lineStart > 0) {
+                currentText = currentText.left(lineStart) + currentText.mid(lastIndex + lastProgressLine.length());
+                if (currentText.endsWith('\n')) {
+                    currentText.chop(1);
+                }
+                logTextEdit->setPlainText(currentText);
+                
+                // Auto-scroll to bottom
+                QScrollBar *scrollBar = logTextEdit->verticalScrollBar();
+                scrollBar->setValue(scrollBar->maximum());
+            }
+        }
+        lastProgressLine.clear();
     }
 }
 

@@ -333,8 +333,8 @@
         <translation type="unfinished">Avrita vekslipening</translation>
     </message>
     <message>
-        <source>Can vary +/- %1 satoshi(s) per input.</source>
-        <translation type="unfinished">Kann vera ymiskt +/- %1 satoshi fyri hvørt ískoyti.</translation>
+        <source>Can vary +/- %1 katoshi(s) per input.</source>
+        <translation type="unfinished">Kann vera ymiskt +/- %1 katoshi fyri hvørt ískoyti.</translation>
     </message>
     <message>
         <source>(no label)</source>

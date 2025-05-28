@@ -1,0 +1,87 @@
+FROM ubuntu:24.04
+
+# Встановити необхідні пакети (оптимізовано)
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libtool \
+    autotools-dev \
+    automake \
+    pkg-config \
+    bsdmainutils \
+    python3 \
+    curl \
+    git \
+    cmake \
+    mingw-w64 \
+    g++-mingw-w64-x86-64 \
+    gcc-mingw-w64-x86-64 \
+    ccache \
+    && rm -rf /var/lib/apt/lists/*
+
+# Налаштувати ccache для прискорення
+ENV CCACHE_DIR=/tmp/ccache
+ENV PATH="/usr/lib/ccache:$PATH"
+RUN ccache --max-size=2G
+
+# Налаштувати mingw для C++20
+RUN update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
+RUN update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+
+# Створити робочу директорію
+WORKDIR /krepto
+
+# Копіювати тільки необхідні файли спочатку (для кешування Docker layers)
+COPY depends/ depends/
+COPY autogen.sh configure.ac Makefile.am ./
+COPY build-aux/ build-aux/
+COPY src/config/ src/config/
+
+# Збудувати залежності з оптимізаціями
+RUN cd depends && \
+    make HOST=x86_64-w64-mingw32 -j8 \
+    NO_UPNP=1 \
+    NO_NATPMP=1 \
+    NO_ZMQ=1
+
+# Тепер копіювати решту коду
+COPY . .
+
+# Виправити ВСІ проблеми з іконками
+RUN mkdir -p src/qt/res/icons && \
+    echo "# Placeholder bitcoin.ico" > src/qt/res/icons/bitcoin.ico && \
+    echo "# Placeholder bitcoin_testnet.ico" > src/qt/res/icons/bitcoin_testnet.ico && \
+    echo "# Placeholder bitcoin_regtest.ico" > src/qt/res/icons/bitcoin_regtest.ico && \
+    echo "# Placeholder bitcoin_signet.ico" > src/qt/res/icons/bitcoin_signet.ico
+
+# Згенерувати configure
+RUN ./autogen.sh
+
+# Налаштувати збірку з оптимізаціями
+RUN CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site ./configure \
+    --prefix=/ \
+    --disable-tests \
+    --disable-bench \
+    --disable-fuzz-binary \
+    --disable-ccache \
+    --enable-gui \
+    --without-natpmp \
+    --without-miniupnpc \
+    --disable-zmq
+
+# Збудувати з GUI (оптимізовано)
+RUN make -j8 V=0
+
+# Створити інсталятор
+RUN mkdir -p /output/Krepto-Windows-GUI && \
+    cp src/qt/bitcoin-qt.exe /output/Krepto-Windows-GUI/Krepto.exe && \
+    cp src/bitcoind.exe /output/Krepto-Windows-GUI/kryptod.exe && \
+    cp src/bitcoin-cli.exe /output/Krepto-Windows-GUI/krypto-cli.exe && \
+    cp src/bitcoin-tx.exe /output/Krepto-Windows-GUI/krypto-tx.exe && \
+    cp src/bitcoin-util.exe /output/Krepto-Windows-GUI/krypto-util.exe
+
+# Копіювати тільки необхідні DLL файли
+RUN cp /usr/lib/gcc/x86_64-w64-mingw32/*/libgcc_s_seh-1.dll /output/Krepto-Windows-GUI/ 2>/dev/null || true && \
+    cp /usr/lib/gcc/x86_64-w64-mingw32/*/libstdc++-6.dll /output/Krepto-Windows-GUI/ 2>/dev/null || true && \
+    cp /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll /output/Krepto-Windows-GUI/ 2>/dev/null || true
+
+CMD ["cp", "-r", "/output/Krepto-Windows-GUI", "/host/"]

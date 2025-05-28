@@ -948,8 +948,8 @@ Signing is only possible with addresses of the type 'legacy'.</source>
         <translation type="unfinished">(%1 låst)</translation>
     </message>
     <message>
-        <source>Can vary +/- %1 satoshi(s) per input.</source>
-        <translation type="unfinished">Kan variere +/- %1 satoshi(er) per input.</translation>
+        <source>Can vary +/- %1 katoshi(s) per input.</source>
+        <translation type="unfinished">Kan variere +/- %1 katoshi(er) per input.</translation>
     </message>
     <message>
         <source>(no label)</source>

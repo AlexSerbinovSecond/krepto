@@ -153,8 +153,8 @@
         <translation type="unfinished">Bytes kopieren</translation>
     </message>
     <message>
-        <source>Can vary +/- %1 satoshi(s) per input.</source>
-        <translation type="unfinished">Kann pro Eingabe um +/- %1 Satoshi(s) abweichen.</translation>
+        <source>Can vary +/- %1 katoshi(s) per input.</source>
+        <translation type="unfinished">Kann pro Eingabe um +/- %1 Katoshi(s) abweichen.</translation>
     </message>
     <message>
         <source>(no label)</source>

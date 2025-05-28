@@ -120,11 +120,11 @@ void MinerTestingSetup::TestPackageSelection(const CScript& scriptPubKey, const 
     tx.vin[0].prevout.n = 0;
     tx.vout.resize(1);
     tx.vout[0].nValue = 5000000000LL - 1000;
-    // This tx has a low fee: 1000 satoshis
+    // This tx has a low fee: 1000 katoshis
     Txid hashParentTx = tx.GetHash(); // save this txid for later use
     tx_mempool.addUnchecked(entry.Fee(1000).Time(Now<NodeSeconds>()).SpendsCoinbase(true).FromTx(tx));
 
-    // This tx has a medium fee: 10000 satoshis
+    // This tx has a medium fee: 10000 katoshis
     tx.vin[0].prevout.hash = txFirst[1]->GetHash();
     tx.vout[0].nValue = 5000000000LL - 10000;
     Txid hashMediumFeeTx = tx.GetHash();
@@ -132,7 +132,7 @@ void MinerTestingSetup::TestPackageSelection(const CScript& scriptPubKey, const 
 
     // This tx has a high fee, but depends on the first transaction
     tx.vin[0].prevout.hash = hashParentTx;
-    tx.vout[0].nValue = 5000000000LL - 1000 - 50000; // 50k satoshi fee
+    tx.vout[0].nValue = 5000000000LL - 1000 - 50000; // 50k katoshi fee
     Txid hashHighFeeTx = tx.GetHash();
     tx_mempool.addUnchecked(entry.Fee(50000).Time(Now<NodeSeconds>()).SpendsCoinbase(false).FromTx(tx));
 
@@ -204,7 +204,7 @@ void MinerTestingSetup::TestPackageSelection(const CScript& scriptPubKey, const 
     // This tx will be mineable, and should cause hashLowFeeTx2 to be selected
     // as well.
     tx.vin[0].prevout.n = 1;
-    tx.vout[0].nValue = 100000000 - 10000; // 10k satoshi fee
+    tx.vout[0].nValue = 100000000 - 10000; // 10k katoshi fee
     tx_mempool.addUnchecked(entry.Fee(10000).FromTx(tx));
     pblocktemplate = AssemblerForTest(tx_mempool).CreateNewBlock(scriptPubKey);
     BOOST_REQUIRE_EQUAL(pblocktemplate->block.vtx.size(), 9U);
@@ -547,11 +547,11 @@ void MinerTestingSetup::TestPrioritisedMining(const CScript& scriptPubKey, const
     tx.vin[0].prevout.hash = txFirst[1]->GetHash();
     tx.vin[0].prevout.n = 0;
     tx.vout[0].nValue = 5000000000LL - 1000;
-    // This tx has a low fee: 1000 satoshis
+    // This tx has a low fee: 1000 katoshis
     Txid hashParentTx = tx.GetHash(); // save this txid for later use
     tx_mempool.addUnchecked(entry.Fee(1000).Time(Now<NodeSeconds>()).SpendsCoinbase(true).FromTx(tx));
 
-    // This tx has a medium fee: 10000 satoshis
+    // This tx has a medium fee: 10000 katoshis
     tx.vin[0].prevout.hash = txFirst[2]->GetHash();
     tx.vout[0].nValue = 5000000000LL - 10000;
     Txid hashMediumFeeTx = tx.GetHash();
@@ -560,7 +560,7 @@ void MinerTestingSetup::TestPrioritisedMining(const CScript& scriptPubKey, const
 
     // This tx also has a low fee, but is prioritised
     tx.vin[0].prevout.hash = hashParentTx;
-    tx.vout[0].nValue = 5000000000LL - 1000 - 1000; // 1000 satoshi fee
+    tx.vout[0].nValue = 5000000000LL - 1000 - 1000; // 1000 katoshi fee
     Txid hashPrioritsedChild = tx.GetHash();
     tx_mempool.addUnchecked(entry.Fee(1000).Time(Now<NodeSeconds>()).SpendsCoinbase(false).FromTx(tx));
     tx_mempool.PrioritiseTransaction(hashPrioritsedChild, 2 * COIN);

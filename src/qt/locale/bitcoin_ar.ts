@@ -669,7 +669,7 @@
         <translation type="unfinished">(%1 تم قفله)</translation>
     </message>
     <message>
-        <source>Can vary +/- %1 satoshi(s) per input.</source>
+        <source>Can vary +/- %1 katoshi(s) per input.</source>
         <translation type="unfinished">يمكن أن يختلف +/- %1 من ساتوشي(s) لكل إدخال.</translation>
     </message>
     <message>

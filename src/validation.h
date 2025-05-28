@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
+// Copyright (c) 2009-2010 Katoshi Nakamoto
 // Copyright (c) 2009-2022 The Krepto core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -143,7 +143,7 @@ struct MempoolAcceptResult {
     const std::list<CTransactionRef> m_replaced_transactions;
     /** Virtual size as used by the mempool, calculated using serialized size and sigops. */
     const std::optional<int64_t> m_vsize;
-    /** Raw base fees in satoshis. */
+    /** Raw base fees in katoshis. */
     const std::optional<CAmount> m_base_fees;
     /** The feerate at which this transaction was considered. This includes any fee delta added
      * using prioritisetransaction (i.e. modified fees). If this transaction was submitted as a

@@ -2,24 +2,21 @@
 #define BITCOIN_QT_MININGDIALOG_H
 
 #include <QDialog>
-#include <QTextEdit>
 #include <QTimer>
-#include <QThread>
 #include <QMutex>
-#include <QProgressBar>
-#include <QLabel>
-#include <QPushButton>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
 
+// Add these includes for internal RPC
+#include <interfaces/node.h>
+#include <rpc/server.h>
+#include <rpc/request.h>
+
+class QTextEdit;
+class QProgressBar;
+class QLabel;
+class QPushButton;
 class ClientModel;
 class WalletModel;
 
-QT_BEGIN_NAMESPACE
-class QTimer;
-QT_END_NAMESPACE
-
-/** Mining dialog with real-time hash rate display and logging */
 class MiningDialog : public QDialog
 {
     Q_OBJECT
@@ -28,15 +25,15 @@ public:
     explicit MiningDialog(QWidget *parent = nullptr);
     ~MiningDialog();
 
-    void setClientModel(ClientModel *clientModel);
-    void setWalletModel(WalletModel *walletModel);
+    void setClientModel(ClientModel *model);
+    void setWalletModel(WalletModel *model);
 
 public Q_SLOTS:
     void startMining();
     void stopMining();
     void updateMiningLog(const QString &message);
     void updateHashRate(double hashRate);
-    void updateProgress(int blocksFound, int totalAttempts);
+    void updateProgress(int blocks, int attempts);
     void syncMiningState(bool mining);
 
 Q_SIGNALS:
@@ -49,34 +46,40 @@ private Q_SLOTS:
 private:
     void setupUI();
     void logMessage(const QString &message);
-    void simulateMining();
     void getBlockchainInfo();
-
-    ClientModel *clientModel;
-    WalletModel *walletModel;
     
-    // UI elements
+    // New methods for internal RPC
+    void continueMining();
+    void performInternalMining(const QString& miningAddress, int maxTries, int attemptNumber);
+
+    // UI components
     QTextEdit *logTextEdit;
     QProgressBar *progressBar;
-    QLabel *hashRateLabel;
     QLabel *statusLabel;
+    QLabel *hashRateLabel;
     QLabel *blocksFoundLabel;
     QPushButton *startButton;
     QPushButton *stopButton;
     QPushButton *clearLogButton;
-    
+
+    // Models
+    ClientModel *clientModel;
+    WalletModel *walletModel;
+
     // Mining state
-    QTimer *updateTimer;
     bool isMining;
     int blocksFound;
     int totalAttempts;
     double currentHashRate;
-    
-    // Mining simulation state
     int blockHeight;
-    uint32_t currentNonce;
+    uint64_t currentNonce;
     int hashCount;
-    
+    QString currentMiningAddress; // Store current mining address
+
+    // Timers
+    QTimer *updateTimer;
+    QTimer *miningTimer;
+
     // Thread safety
     QMutex logMutex;
 };

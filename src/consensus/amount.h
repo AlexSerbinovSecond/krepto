@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
+// Copyright (c) 2009-2010 Katoshi Nakamoto
 // Copyright (c) 2009-2021 The Krepto core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -8,13 +8,13 @@
 
 #include <cstdint>
 
-/** Amount in satoshis (Can be negative) */
+/** Amount in katoshis (Can be negative) */
 typedef int64_t CAmount;
 
-/** The amount of satoshis in one BTC. */
+/** The amount of katoshis in one BTC. */
 static constexpr CAmount COIN = 100000000;
 
-/** No amount larger than this (in satoshi) is valid.
+/** No amount larger than this (in katoshi) is valid.
  *
  * Note that this constant is *not* the total money supply, which in Bitcoin
  * currently happens to be less than 21,000,000 BTC for various reasons, but

@@ -866,8 +866,8 @@ Signing is only possible with addresses of the type 'legacy'.</source>
         <translation type="unfinished">(%1 naka-lock)</translation>
     </message>
     <message>
-        <source>Can vary +/- %1 satoshi(s) per input.</source>
-        <translation type="unfinished">Maaaring magbago ng +/- %1♦4satoshi(s)♦ kada ♦input♦.</translation>
+        <source>Can vary +/- %1 katoshi(s) per input.</source>
+        <translation type="unfinished">Maaaring magbago ng +/- %1♦4katoshi(s)♦ kada ♦input♦.</translation>
     </message>
     <message>
         <source>(no label)</source>

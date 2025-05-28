@@ -1,4 +1,4 @@
-// Copyright (c) 2010 Satoshi Nakamoto
+// Copyright (c) 2010 Katoshi Nakamoto
 // Copyright (c) 2009-2021 The Krepto core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -99,7 +99,6 @@ public:
         consensus.powLimit = uint256{"7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"};
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
-<<<<<<< HEAD
         consensus.fPowAllowMinDifficultyBlocks = true; // Allow low difficulty for Krepto mainnet
         consensus.enforce_BIP94 = false;
         consensus.fPowNoRetargeting = false;

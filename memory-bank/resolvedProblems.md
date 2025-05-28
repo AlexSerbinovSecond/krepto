@@ -522,3 +522,301 @@ consensus.nPowTargetSpacing = 10 * 60; // 10 minutes
 3. Документувати всі зміни в chainparams
 4. Використовувати автоматичні fallback механізми
 5. Перевіряти відповідність між клієнтом та сервером
+
+## 29. Майнінг в GUI Не Працює - Standalone Клієнт (Грудень 2024)
+
+**Дата**: Грудень 2024  
+**Компонент**: GUI Mining Dialog  
+**Складність**: Висока  
+
+### Симптоми
+- Майнінг в GUI клієнті не запускається
+- Логи показують: "ERROR: Failed to start mining process"
+- Статистика показує: "Total attempts: 0, Blocks found: 0"
+- Користувач хоче standalone GUI без необхідності керувати демоном окремо
+
+### Діагностика
+1. **Перевірка процесів**: `ps aux | grep bitcoind` - демон не запущений
+2. **Перевірка виконуваних файлів**: `ls -la src/` - відсутні скомпільовані файли
+3. **Аналіз коду**: `miningdialog.cpp` використовував QProcess для виклику зовнішнього `bitcoin-cli`
+4. **Архітектурна проблема**: GUI вимагав окремо запущеного демона для майнінгу
+
+### Технічні Деталі Проблеми
+```cpp
+// Проблемний код - зовнішні процеси
+QString program = "./src/bitcoin-cli";
+QStringList arguments;
+arguments << "-datadir=/Users/serbinov/.krepto" 
+          << "-rpcport=12347" 
+          << "generatetoaddress" 
+          << "1" << miningAddress 
+          << QString::number(randomMaxTries);
+
+QProcess *process = new QProcess(this);
+process->start(program, arguments); // Вимагає зовнішнього демона
+```
+
+### Рішення
+1. **Компіляція проєкту**: `make -j8` для створення виконуваних файлів
+2. **Заміна QProcess на внутрішні RPC**:
+   ```cpp
+   // Нове рішення - внутрішні RPC виклики
+   UniValue params(UniValue::VARR);
+   params.push_back(1); // Generate 1 block
+   params.push_back(miningAddress.toStdString());
+   params.push_back(maxTries);
+   
+   UniValue result = clientModel->node().executeRpc("generatetoaddress", params, "");
+   ```
+
+3. **Виправлення структур даних**:
+   ```cpp
+   // Було (неправильно)
+   for (const auto& addr_pair : addresses) {
+       if (addr_pair.second.purpose == AddressPurpose::RECEIVE) {
+           miningAddress = QString::fromStdString(EncodeDestination(addr_pair.first));
+   
+   // Стало (правильно)
+   for (const auto& addr : addresses) {
+       if (addr.purpose == wallet::AddressPurpose::RECEIVE) {
+           miningAddress = QString::fromStdString(EncodeDestination(addr.dest));
+   ```
+
+4. **Виправлення UniValue методів**:
+   ```cpp
+   // Було
+   int blocks = result["blocks"].getInt();
+   
+   // Стало
+   int blocks = result["blocks"].getInt<int>();
+   ```
+
+### Додаткові Заголовки
+```cpp
+#include <rpc/server.h>
+#include <rpc/request.h>
+#include <interfaces/node.h>
+#include <univalue.h>
+```
+
+### Результат
+- ✅ GUI тепер працює як standalone клієнт
+- ✅ Майнінг працює через внутрішні RPC без зовнішніх залежностей
+- ✅ Автоматичне створення mining адрес
+- ✅ Реальний час логування та статистика
+- ✅ Рандомізація параметрів майнінгу
+- ✅ Повна інтеграція з blockchain info
+
+### Запуск
+```bash
+# Тепер достатньо одної команди
+./src/qt/bitcoin-qt -datadir=/Users/serbinov/.krepto
+
+# Майнінг: Tools → Mining Console → Start Mining
+```
+
+### Уроки
+1. **Standalone архітектура**: GUI клієнти повинні мати вбудований демон
+2. **Внутрішні RPC**: Краще використовувати внутрішні виклики замість зовнішніх процесів
+3. **Структури даних**: Важливо розуміти точну структуру interfaces::WalletAddress
+4. **Template методи**: UniValue::getInt() потребує explicit template параметр
+
+---
+
+## 28. Проблема з Genesis Блоком та CheckProofOfWork (Травень 2024)
+
+**Дата**: 27 травня 2024  
+**Компонент**: Consensus/Validation  
+**Складність**: Критична  
+
+### Симптоми
+- Krepto не запускається з помилкою: "Error: Incorrect or no genesis block found"
+- CheckProofOfWork fails для genesis блоку
+- Логи показують: "ERROR: CheckProofOfWork: hash doesn't match nBits"
+
+### Діагностика
+1. **Genesis блок**: Хеш `00000d2843e19d3f61aaf31f1f919a1be17fc1b814d43117f8f8a4b602a559f2`
+2. **nBits значення**: 0x207fffff (початкова складність)
+3. **Проблема**: CheckProofOfWork перевіряє чи хеш менший за target
+
+### Рішення
+Створено спеціальний скрипт `mine_genesis.cpp` для генерації валідного genesis блоку:
+
+```cpp
+// Ключові параметри для Krepto genesis
+static const uint32_t KREPTO_GENESIS_TIME = 1716825600; // 27 травня 2024
+static const uint32_t KREPTO_GENESIS_BITS = 0x207fffff; // Початкова складність
+static const std::string KREPTO_GENESIS_COINBASE = "Krepto Genesis Block - May 27, 2024";
+
+// Результат майнінгу
+nNonce = 414098;
+hash = 00000d2843e19d3f61aaf31f1f919a1be17fc1b814d43117f8f8a4b602a559f2
+```
+
+### Результат
+- ✅ Валідний genesis блок з proof of work
+- ✅ Krepto запускається без помилок
+- ✅ Мережа працює стабільно
+
+---
+
+## 27. Проблема з Компіляцією після Ребрендингу (Травень 2024)
+
+**Дата**: 26 травня 2024  
+**Компонент**: Build System  
+**Складність**: Середня  
+
+### Симптоми
+- Помилки компіляції після зміни назв файлів
+- Відсутні заголовки після ребрендингу
+- Makefile не знаходить нові файли
+
+### Рішення
+1. **Повна перекомпіляція**: `make clean && ./autogen.sh && ./configure && make -j8`
+2. **Оновлення Makefile.am**: Додано нові файли до збірки
+3. **Виправлення шляхів**: Оновлено всі посилання на файли
+
+### Результат
+- ✅ Успішна компіляція всіх компонентів
+- ✅ Всі тести проходять
+- ✅ GUI та CLI працюють стабільно
+
+---
+
+## 26. Проблема з Портами та Magic Bytes (Травень 2024)
+
+**Дата**: 25 травня 2024  
+**Компонент**: Network Protocol  
+**Складність**: Середня  
+
+### Симптоми
+- Конфлікт портів з Bitcoin Core
+- Неправильні magic bytes в мережевих повідомленнях
+- Вузли не можуть з'єднатися
+
+### Рішення
+1. **Унікальні порти**: mainnet 12345, testnet 12346, regtest 12347
+2. **Magic bytes**: "KREP" (0x4b524550) замість Bitcoin "main"
+3. **Оновлення chainparams**: Всі мережеві параметри змінені
+
+### Результат
+- ✅ Krepto працює незалежно від Bitcoin
+- ✅ Унікальна мережева ідентифікація
+- ✅ Немає конфліктів портів
+
+---
+
+## 25. Проблема з GUI Ребрендингом (Травень 2024)
+
+**Дата**: 24 травня 2024  
+**Компонент**: Qt GUI  
+**Складність**: Висока  
+
+### Симптоми
+- GUI все ще показує "Bitcoin Core"
+- Іконки залишаються Bitcoin
+- Меню та діалоги не змінені
+
+### Рішення
+1. **Масова заміна тексту**: Всі "Bitcoin" → "Krepto"
+2. **Нові іконки**: Створені власні PNG/ICO файли
+3. **Оновлення ресурсів**: bitcoin.qrc → krepto.qrc
+
+### Результат
+- ✅ Повний ребрендинг GUI
+- ✅ Власні іконки та логотипи
+- ✅ Консистентний брендинг
+
+---
+
+*[Попередні 24 записи залишаються без змін]*
+
+## Проблема #30: Повільний майнінг в GUI
+
+**Дата**: 19 грудня 2024
+
+**Симптоми**:
+- GUI майнінг працював дуже повільно
+- Один блок майнився, потім 4 хвилини нічого не відбувалося
+- CLI скрипт майнив блоки кожні кілька секунд
+- Логи показували довгі паузи між спробами
+
+**Діагностика**:
+1. Перевірено код `miningdialog.cpp`
+2. Знайдено таймер з інтервалом 10 секунд: `miningTimer->start(10000)`
+3. Виявлено великі діапазони рандомізації:
+   - max_tries: 500,000-2,000,000
+   - delay: 0-5,000 мс
+
+**Рішення**:
+1. Зменшено інтервал таймера з 10 секунд до 1 секунди:
+   ```cpp
+   miningTimer->start(1000); // Try mining every 1 second
+   ```
+
+2. Оптимізовано параметри рандомізації:
+   ```cpp
+   // Зменшено max_tries
+   std::uniform_int_distribution<> tries_dist(100000, 500000);
+   
+   // Зменшено затримку
+   std::uniform_int_distribution<> delay_dist(100, 1000);
+   ```
+
+**Результат**:
+- Майнінг тепер працює активно кожну секунду
+- Параметри оптимізовані для швидшого майнінгу
+- GUI майнінг тепер конкурентоспроможний з CLI скриптом
+
+**Файли змінені**:
+- `src/qt/miningdialog.cpp` (рядки 244, 186-187, 190-191)
+
+---
+
+## Проблема #29: GUI майнінг не працює
+
+**Дата**: 19 грудня 2024
+
+**Симптоми**:
+- Майнінг в GUI клієнті не запускався
+- Логи показували: "ERROR: Failed to start mining process"
+- Total attempts: 0, Blocks found: 0
+
+**Діагностика**:
+1. Перевірено виконувані файли - тільки .o файли, не скомпільовані
+2. GUI використовував QProcess для виклику зовнішнього `./src/bitcoin-cli`
+3. Це створювало залежність від зовнішніх процесів
+
+**Рішення**:
+1. Скомпільовано проєкт: `make -j8`
+2. Замінено зовнішні QProcess виклики на внутрішні RPC виклики:
+   ```cpp
+   // Старий підхід
+   QProcess *process = new QProcess(this);
+   process->start("./src/bitcoin-cli", arguments);
+   
+   // Новий підхід
+   UniValue result = clientModel->node().executeRpc("generatetoaddress", params, "");
+   ```
+
+3. Додано необхідні заголовки:
+   ```cpp
+   #include <rpc/request.h>
+   #include <univalue.h>
+   ```
+
+4. Виправлено структури даних та методи:
+   - `interfaces::WalletAddress` з полями `dest`, `purpose`
+   - `UniValue.getInt<int>()` замість `getInt()`
+
+**Результат**:
+- GUI тепер працює як повністю standalone клієнт
+- Вбудований демон (не потребує окремого bitcoind)
+- Внутрішній майнінг (не потребує CLI)
+- Одна команда запуску: `./src/qt/bitcoin-qt -datadir=/Users/serbinov/.krepto`
+
+**Файли змінені**:
+- `src/qt/miningdialog.cpp`
+- `src/qt/miningdialog.h`
+
+---

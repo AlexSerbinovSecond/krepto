@@ -985,8 +985,8 @@ Cüzdan kilidini aç.</translation>
         <translation type="unfinished">(%1'i kilitli)</translation>
     </message>
     <message>
-        <source>Can vary +/- %1 satoshi(s) per input.</source>
-        <translation type="unfinished">Her girdi için +/- %1 satoshi değişebilir.</translation>
+        <source>Can vary +/- %1 katoshi(s) per input.</source>
+        <translation type="unfinished">Her girdi için +/- %1 katoshi değişebilir.</translation>
     </message>
     <message>
         <source>(no label)</source>

@@ -6,6 +6,13 @@
 #include <wallet/wallet.h>
 #include <outputtype.h>
 
+// Add includes for internal RPC
+#include <rpc/server.h>
+#include <rpc/request.h>
+#include <util/strencodings.h>
+#include <interfaces/node.h>
+#include <univalue.h>
+
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QTextEdit>
@@ -19,7 +26,6 @@
 #include <QGroupBox>
 #include <QGridLayout>
 #include <QMessageBox>
-#include <QProcess>
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -48,6 +54,15 @@ MiningDialog::MiningDialog(QWidget *parent) :
     updateTimer = new QTimer(this);
     connect(updateTimer, &QTimer::timeout, this, &MiningDialog::updateDisplay);
     updateTimer->start(1000); // Update every second
+    
+    // Setup mining timer
+    miningTimer = new QTimer(this);
+    connect(miningTimer, &QTimer::timeout, [this]() {
+        if (isMining) {
+            // Continue mining cycle
+            continueMining();
+        }
+    });
 }
 
 MiningDialog::~MiningDialog()
@@ -139,19 +154,16 @@ void MiningDialog::setWalletModel(WalletModel *model)
 
 void MiningDialog::startMining()
 {
-    if (!walletModel) {
-        QMessageBox::warning(this, tr("Mining Error"), 
-                           tr("No wallet available. Please create or open a wallet first."));
-        return;
-    }
-    
     if (isMining) {
         return;
     }
     
+    if (!clientModel) {
+        logMessage(tr("ERROR: Client model not available"));
+        return;
+    }
+    
     isMining = true;
-    blocksFound = 0;
-    totalAttempts = 0;
     
     startButton->setEnabled(false);
     stopButton->setEnabled(true);
@@ -162,21 +174,26 @@ void MiningDialog::startMining()
     // Emit signal to update main GUI
     Q_EMIT miningStarted();
     
+    logMessage(tr(""));
     logMessage(tr("=== MINING STARTED ==="));
     logMessage(tr("Initializing mining process..."));
-    logMessage(tr("Getting mining address from wallet..."));
     
-    // Get or create mining address
+    // Get and display current blockchain info
+    getBlockchainInfo();
+    
     try {
+        // Get mining address from wallet
         QString miningAddress;
         
-        // First, try to get existing receiving address
-        auto addresses = walletModel->wallet().getAddresses();
-        for (const auto& addr : addresses) {
-            if (addr.purpose == wallet::AddressPurpose::RECEIVE) {
-                miningAddress = QString::fromStdString(EncodeDestination(addr.dest));
-                logMessage(tr("Found existing address: %1").arg(miningAddress));
-                break;
+        if (walletModel && walletModel->wallet().getAddresses().size() > 0) {
+            // Use existing address if available
+            auto addresses = walletModel->wallet().getAddresses();
+            for (const auto& addr : addresses) {
+                if (addr.purpose == wallet::AddressPurpose::RECEIVE) {
+                    miningAddress = QString::fromStdString(EncodeDestination(addr.dest));
+                    logMessage(tr("Using existing address: %1").arg(miningAddress));
+                    break;
+                }
             }
         }
         
@@ -200,16 +217,141 @@ void MiningDialog::startMining()
             return;
         }
         
-        logMessage(tr("Mining to address: %1").arg(miningAddress));
-        logMessage(tr("Starting hash calculations..."));
-        logMessage(tr(""));
+        // Store mining address for continuous use
+        currentMiningAddress = miningAddress;
         
-        // Start the actual mining process
-        simulateMining();
+        // Start continuous mining
+        logMessage(tr("⛏️  Starting continuous mining to address: %1").arg(miningAddress));
+        
+        // Start the continuous mining cycle
+        continueMining();
         
     } catch (const std::exception& e) {
-        logMessage(tr("ERROR: Failed to get/create mining address: %1").arg(QString::fromStdString(e.what())));
+        logMessage(tr("ERROR: Failed to start mining: %1").arg(QString::fromStdString(e.what())));
         stopMining();
+        return;
+    }
+    
+    // Start timer for continuous mining - every 0.1 seconds for very active mining
+    miningTimer->start(100);
+}
+
+void MiningDialog::continueMining()
+{
+    if (!isMining || !clientModel || currentMiningAddress.isEmpty()) {
+        return;
+    }
+    
+    try {
+        // Initialize random generator
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        
+        // Get current difficulty for adaptive max_tries
+        UniValue difficultyParams(UniValue::VARR);
+        UniValue difficultyResult = clientModel->node().executeRpc("getblockchaininfo", difficultyParams, "");
+        double currentDifficulty = 0.001; // Default fallback
+        
+        if (difficultyResult.isObject() && difficultyResult.exists("difficulty")) {
+            currentDifficulty = difficultyResult["difficulty"].get_real();
+        }
+        
+        // Calculate adaptive max_tries based on difficulty
+        // Formula: base_tries * difficulty * safety_factor
+        int baseTries = 1000000; // 1M base tries for difficulty 1.0
+        int safetyFactor = 10;   // 10x safety margin
+        int adaptiveMaxTries = static_cast<int>(baseTries * currentDifficulty * safetyFactor);
+        
+        // Ensure reasonable bounds: minimum 1M, maximum 100M
+        if (adaptiveMaxTries < 1000000) {
+            adaptiveMaxTries = 1000000;
+        } else if (adaptiveMaxTries > 100000000) {
+            adaptiveMaxTries = 100000000;
+        }
+        
+        // Add some randomization to prevent conflicts
+        std::uniform_int_distribution<> tries_dist(static_cast<int>(adaptiveMaxTries * 0.8), static_cast<int>(adaptiveMaxTries * 1.2));
+        int randomMaxTries = tries_dist(gen);
+        
+        // Reduce delay for faster mining
+        std::uniform_int_distribution<> delay_dist(10, 50); // Very short delay
+        int randomDelay = delay_dist(gen);
+        
+        // Show mining parameters every 10 attempts
+        static int attemptCounter = 0;
+        attemptCounter++;
+        
+        if (attemptCounter % 10 == 1) {
+            logMessage(tr("🧠 Adaptive mining parameters (attempt #%1):").arg(attemptCounter));
+            logMessage(tr("   Current difficulty: %1").arg(QString::number(currentDifficulty, 'f', 6)));
+            logMessage(tr("   Adaptive max_tries: %1").arg(adaptiveMaxTries));
+            logMessage(tr("🎲 Using randomized parameters: max_tries=%1, delay=%2ms")
+                      .arg(randomMaxTries).arg(randomDelay));
+        }
+        
+        // Store attempt counter for lambda capture
+        int currentAttempt = attemptCounter;
+        
+        // Apply random delay before starting
+        QTimer::singleShot(randomDelay, [this, randomMaxTries, currentAttempt]() {
+            if (!isMining) return;
+            performInternalMining(currentMiningAddress, randomMaxTries, currentAttempt);
+        });
+        
+    } catch (const std::exception& e) {
+        logMessage(tr("ERROR: Failed to continue mining: %1").arg(QString::fromStdString(e.what())));
+        stopMining();
+        return;
+    }
+}
+
+void MiningDialog::performInternalMining(const QString& miningAddress, int maxTries, int attemptNumber)
+{
+    if (!isMining || !clientModel) {
+        return;
+    }
+    
+    try {
+        // Use internal RPC call instead of external process
+        logMessage(tr("🔨 Mining attempt #%1 with %2 max attempts...").arg(attemptNumber).arg(maxTries));
+        
+        // Prepare RPC parameters
+        UniValue params(UniValue::VARR);
+        params.push_back(1); // Generate 1 block
+        params.push_back(miningAddress.toStdString());
+        params.push_back(maxTries);
+        
+        // Execute RPC call through the node interface
+        UniValue result = clientModel->node().executeRpc("generatetoaddress", params, "");
+        
+        if (result.isArray() && result.size() > 0) {
+            // Block was found!
+            blocksFound++;
+            totalAttempts += maxTries;
+            
+            std::string blockHash = result[0].get_str();
+            logMessage(tr(""));
+            logMessage(tr("*** BLOCK FOUND! ***"));
+            logMessage(tr("✅ Block %1 mined successfully!").arg(blocksFound));
+            logMessage(tr("🔗 Block hash: %1").arg(QString::fromStdString(blockHash)));
+            logMessage(tr("📍 Mined to address: %1").arg(miningAddress));
+            logMessage(tr(""));
+            
+            // Get updated blockchain info
+            getBlockchainInfo();
+        } else {
+            // No block found, but continue mining like the script
+            totalAttempts += maxTries;
+            logMessage(tr("⚠️  Mining attempt #%1 completed but no block found - continuing...").arg(attemptNumber));
+            logMessage(tr("📊 Total attempts so far: %1").arg(totalAttempts));
+        }
+        
+        // Update hash rate (approximate)
+        currentHashRate = maxTries;
+        hashCount++;
+        
+    } catch (const std::exception& e) {
+        logMessage(tr("❌ Internal mining error: %1").arg(QString::fromStdString(e.what())));
     }
 }
 
@@ -237,135 +379,6 @@ void MiningDialog::stopMining()
     logMessage(tr("=== MINING STOPPED ==="));
     logMessage(tr("Total attempts: %1").arg(totalAttempts));
     logMessage(tr("Blocks found: %1").arg(blocksFound));
-}
-
-void MiningDialog::simulateMining()
-{
-    // Real mining using RPC generatetoaddress command
-    logMessage(tr("Starting mining process..."));
-    
-    QTimer *miningTimer = new QTimer(this);
-    connect(miningTimer, &QTimer::timeout, [this, miningTimer]() {
-        if (!isMining) {
-            miningTimer->stop();
-            miningTimer->deleteLater();
-            return;
-        }
-        
-        // Always generate a fresh legacy address for mining to avoid witness issues
-        QString miningAddress;
-        if (walletModel) {
-            try {
-                logMessage(tr("Generating fresh legacy address for mining..."));
-                auto new_addr = walletModel->wallet().getNewDestination(OutputType::LEGACY, "mining");
-                if (new_addr) {
-                    miningAddress = QString::fromStdString(EncodeDestination(*new_addr));
-                    logMessage(tr("Generated legacy address for mining: %1").arg(miningAddress));
-                } else {
-                    logMessage(tr("ERROR: Failed to generate legacy address"));
-                    stopMining();
-                    return;
-                }
-            } catch (const std::exception& e) {
-                logMessage(tr("ERROR: Failed to generate mining address: %1").arg(QString::fromStdString(e.what())));
-                stopMining();
-                return;
-            }
-        }
-        
-        if (miningAddress.isEmpty()) {
-            logMessage(tr("ERROR: No mining address available"));
-            stopMining();
-            return;
-        }
-        
-        // Execute real mining command via RPC with randomization
-        logMessage(tr("⛏️  Attempting to mine 1 block to address: %1").arg(miningAddress));
-        
-        // Add randomization to prevent parallel mining conflicts
-        // Generate random max_tries between 500,000 and 2,000,000
-        static std::random_device rd;
-        static std::mt19937 gen(rd());
-        std::uniform_int_distribution<> tries_dist(500000, 2000000);
-        int randomMaxTries = tries_dist(gen);
-        
-        // Add random delay between 0-5 seconds to stagger mining attempts
-        std::uniform_int_distribution<> delay_dist(0, 5000);
-        int randomDelay = delay_dist(gen);
-        
-        logMessage(tr("🎲 Using randomized parameters: max_tries=%1, delay=%2ms")
-                  .arg(randomMaxTries).arg(randomDelay));
-        
-        // Apply random delay before starting
-        QTimer::singleShot(randomDelay, [this, miningAddress, randomMaxTries]() {
-            if (!isMining) return;
-            
-            // Use QProcess to execute bitcoin-cli command
-            QProcess *process = new QProcess(this);
-            QString program = "./src/bitcoin-cli";
-            QStringList arguments;
-            arguments << "-datadir=/Users/serbinov/.krepto"
-                      << "-rpcport=12347"
-                      << "generatetoaddress"
-                      << "1"
-                      << miningAddress
-                      << QString::number(randomMaxTries); // Randomized max tries
-        
-        connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-                [this, process, miningAddress, randomMaxTries](int exitCode, QProcess::ExitStatus exitStatus) {
-            QString output = process->readAllStandardOutput();
-            QString error = process->readAllStandardError();
-            
-            if (exitCode == 0 && !output.isEmpty()) {
-                // Parse JSON output to get block hashes
-                QJsonParseError parseError;
-                QJsonDocument doc = QJsonDocument::fromJson(output.toUtf8(), &parseError);
-                
-                if (parseError.error == QJsonParseError::NoError && doc.isArray()) {
-                    QJsonArray blocks = doc.array();
-                    if (blocks.size() > 0) {
-                        blocksFound++;
-                        totalAttempts += randomMaxTries; // Use actual randomized attempts
-                        
-                        QString blockHash = blocks[0].toString();
-                        logMessage(tr(""));
-                        logMessage(tr("*** BLOCK FOUND! ***"));
-                        logMessage(tr("✅ Block %1 mined successfully!").arg(blocksFound));
-                        logMessage(tr("🔗 Block hash: %1").arg(blockHash));
-                        logMessage(tr("📍 Mined to address: %1").arg(miningAddress));
-                        logMessage(tr(""));
-                        
-                        // Get updated blockchain info
-                        getBlockchainInfo();
-                    }
-                } else {
-                    logMessage(tr("⚠️  Mining attempt completed but no block found"));
-                }
-            } else {
-                if (!error.isEmpty()) {
-                    logMessage(tr("❌ Mining error: %1").arg(error));
-                } else {
-                    logMessage(tr("⚠️  Mining attempt failed (exit code: %1)").arg(exitCode));
-                }
-            }
-            
-            // Update hash rate (approximate)
-            currentHashRate = randomMaxTries; // Use actual randomized attempts
-            hashCount++;
-            
-            process->deleteLater();
-        });
-        
-            process->start(program, arguments);
-            
-            if (!process->waitForStarted()) {
-                logMessage(tr("ERROR: Failed to start mining process"));
-                stopMining();
-            }
-        });
-    });
-    
-    miningTimer->start(10000); // Try mining every 10 seconds
 }
 
 void MiningDialog::updateMiningLog(const QString &message)
@@ -432,34 +445,26 @@ void MiningDialog::logMessage(const QString &message)
 
 void MiningDialog::getBlockchainInfo()
 {
-    QProcess *process = new QProcess(this);
-    QString program = "./src/bitcoin-cli";
-    QStringList arguments;
-    arguments << "-datadir=/Users/serbinov/.krepto"
-              << "-rpcport=12347"
-              << "getblockchaininfo";
+    if (!clientModel) {
+        return;
+    }
     
-    connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-            [this, process](int exitCode, QProcess::ExitStatus exitStatus) {
-        if (exitCode == 0) {
-            QString output = process->readAllStandardOutput();
-            QJsonParseError parseError;
-            QJsonDocument doc = QJsonDocument::fromJson(output.toUtf8(), &parseError);
+    try {
+        // Use internal RPC call for blockchain info
+        UniValue params(UniValue::VARR);
+        UniValue result = clientModel->node().executeRpc("getblockchaininfo", params, "");
+        
+        if (result.isObject()) {
+            int blocks = result["blocks"].getInt<int>();
+            std::string bestHash = result["bestblockhash"].get_str();
+            double difficulty = result["difficulty"].get_real();
             
-            if (parseError.error == QJsonParseError::NoError && doc.isObject()) {
-                QJsonObject info = doc.object();
-                int blocks = info["blocks"].toInt();
-                QString bestHash = info["bestblockhash"].toString();
-                double difficulty = info["difficulty"].toDouble();
-                
-                logMessage(tr("📊 Blockchain Info:"));
-                logMessage(tr("   Height: %1 blocks").arg(blocks));
-                logMessage(tr("   Difficulty: %1").arg(QString::number(difficulty, 'f', 6)));
-                logMessage(tr("   Best block: %1").arg(bestHash));
-            }
+            logMessage(tr("📊 Blockchain Info:"));
+            logMessage(tr("   Height: %1 blocks").arg(blocks));
+            logMessage(tr("   Difficulty: %1").arg(QString::number(difficulty, 'f', 6)));
+            logMessage(tr("   Best block: %1").arg(QString::fromStdString(bestHash)));
         }
-        process->deleteLater();
-    });
-    
-    process->start(program, arguments);
+    } catch (const std::exception& e) {
+        logMessage(tr("Warning: Could not get blockchain info: %1").arg(QString::fromStdString(e.what())));
+    }
 } 

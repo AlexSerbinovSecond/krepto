@@ -924,8 +924,8 @@ Signing is only possible with addresses of the type 'legacy'.</source>
         <translation type="unfinished">(%1 қулфланган)</translation>
     </message>
     <message>
-        <source>Can vary +/- %1 satoshi(s) per input.</source>
-        <translation type="unfinished">Har bir kiruvchi +/- %1  satoshiga farq qilishi mumkin.</translation>
+        <source>Can vary +/- %1 katoshi(s) per input.</source>
+        <translation type="unfinished">Har bir kiruvchi +/- %1  katoshiga farq qilishi mumkin.</translation>
     </message>
     <message>
         <source>(no label)</source>

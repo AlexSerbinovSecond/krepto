@@ -1,78 +1,163 @@
-Krepto core integration/staging tree
-=====================================
+# Krepto - Standalone Cryptocurrency Client
 
-https://bitcoincore.org
+![Krepto Logo](share/pixmaps/krepto128.png)
 
-For an immediately usable, binary version of the Krepto core software, see
-https://bitcoincore.org/en/download/.
+**Krepto** - це повністю автономний криптовалютний клієнт з вбудованим майнінгом. Форк Bitcoin Core з власною мережею та простим GUI інтерфейсом.
 
-What is Krepto core?
----------------------
+## 🚀 Швидкий Старт
 
-Krepto core connects to the Bitcoin peer-to-peer network to download and fully
-validate blocks and transactions. It also includes a wallet and graphical user
-interface, which can be optionally built.
+### Запуск GUI Клієнта (Рекомендовано)
 
-Further information about Krepto core is available in the [doc folder](/doc).
+```bash
+# Запуск standalone GUI клієнта
+./src/qt/bitcoin-qt -datadir=/Users/serbinov/.krepto
+```
 
-License
--------
+**Це все!** GUI автоматично:
+- Запустить власний демон
+- Підключиться до Krepto мережі  
+- Буде готовий до майнінгу
 
-Krepto core is released under the terms of the MIT license. See [COPYING](COPYING) for more
-information or see https://opensource.org/licenses/MIT.
+### Майнінг через GUI
 
-Development Process
--------------------
+1. Відкрийте **Tools** → **Mining Console**
+2. Натисніть **Start Mining**
+3. Спостерігайте за статистикою в реальному часі
 
-The `master` branch is regularly built (see `doc/build-*.md` for instructions) and tested, but it is not guaranteed to be
-completely stable. [Tags](https://github.com/bitcoin/bitcoin/tags) are created
-regularly from release branches to indicate new official, stable release versions of Krepto core.
+## 📊 Характеристики Мережі
 
-The https://github.com/bitcoin-core/gui repository is used exclusively for the
-development of the GUI. Its master branch is identical in all monotree
-repositories. Release branches and tags do not exist, so please do not fork
-that repository unless it is for development reasons.
+- **Тікер**: KREPTO
+- **Порт P2P**: 12345
+- **Порт RPC**: 12347
+- **Magic Bytes**: KREP (0x4b524550)
+- **Genesis Hash**: `00000d2843e19d3f61aaf31f1f919a1be17fc1b814d43117f8f8a4b602a559f2`
+- **SegWit**: Активний з genesis блоку
 
-The contribution workflow is described in [CONTRIBUTING.md](CONTRIBUTING.md)
-and useful hints for developers can be found in [doc/developer-notes.md](doc/developer-notes.md).
+## 🎮 Функції
 
-Testing
--------
+### ✅ Standalone GUI
+- Повністю автономний клієнт
+- Не потребує окремого демона
+- Вбудований майнінг
+- Реальний час статистика
 
-Testing and code review is the bottleneck for development; we get more pull
-requests than we can review and test on short notice. Please be patient and help out by testing
-other people's pull requests, and remember this is a security-critical project where any mistake might cost people
-lots of money.
+### ✅ Майнінг Система
+- Інтегрований в GUI
+- Автоматичне створення адрес
+- Рандомізація параметрів
+- Детальне логування
 
-### Automated Testing
+### ✅ Мережа
+- Власна Krepto мережа
+- Стабільна робота 24/7
+- Автоматичне підключення
+- Висока швидкість транзакцій
 
-Developers are strongly encouraged to write [unit tests](src/test/README.md) for new code, and to
-submit new unit tests for old code. Unit tests can be compiled and run
-(assuming they weren't disabled in configure) with: `make check`. Further details on running
-and extending unit tests can be found in [/src/test/README.md](/src/test/README.md).
+## 🔧 Альтернативні Способи Запуску
 
-There are also [regression and integration tests](/test), written
-in Python.
-These tests can be run (if the [test dependencies](/test) are installed) with: `test/functional/test_runner.py`
+### CLI Демон (Для досвідчених користувачів)
 
-The CI (Continuous Integration) systems make sure that every pull request is built for Windows, Linux, and macOS,
-and that unit/sanity tests are run automatically.
+```bash
+# Запуск демона
+./src/bitcoind -datadir=/Users/serbinov/.krepto -daemon
 
-### Manual Quality Assurance (QA) Testing
+# Перевірка статусу
+./src/bitcoin-cli -datadir=/Users/serbinov/.krepto -rpcport=12347 getblockchaininfo
 
-Changes should be tested by somebody other than the developer who wrote the
-code. This is especially important for large or high-risk changes. It is useful
-to add a test plan to the pull request description if testing the changes is
-not straightforward.
+# Майнінг через CLI
+./src/bitcoin-cli -datadir=/Users/serbinov/.krepto -rpcport=12347 generatetoaddress 1 $(./src/bitcoin-cli -datadir=/Users/serbinov/.krepto -rpcport=12347 getnewaddress)
 
-Translations
-------------
+# Зупинка демона
+./src/bitcoin-cli -datadir=/Users/serbinov/.krepto -rpcport=12347 stop
+```
 
-Changes to translations as well as new translations can be submitted to
-[Krepto core's Transifex page](https://www.transifex.com/bitcoin/bitcoin/).
+## 📁 Структура Файлів
 
-Translations are periodically pulled from Transifex and merged into the git repository. See the
-[translation process](doc/translation_process.md) for details on how this works.
+```
+krepto/
+├── src/
+│   ├── qt/bitcoin-qt          # GUI клієнт (рекомендовано)
+│   ├── bitcoind               # Демон
+│   ├── bitcoin-cli            # CLI інтерфейс
+│   └── bitcoin-tx             # Утиліта транзакцій
+├── share/                     # Ресурси та іконки
+└── README.md                  # Цей файл
+```
 
-**Important**: We do not accept translation changes as GitHub pull requests because the next
-pull from Transifex would automatically overwrite them again.
+## 🎯 Для Користувачів
+
+### Простий Спосіб (GUI)
+1. Запустіть `./src/qt/bitcoin-qt -datadir=/Users/serbinov/.krepto`
+2. Дочекайтеся синхронізації
+3. Відкрийте **Tools** → **Mining Console**
+4. Натисніть **Start Mining**
+
+### Що Відбувається
+- GUI автоматично запускає демон
+- Підключається до Krepto мережі
+- Синхронізує blockchain
+- Готовий до майнінгу та транзакцій
+
+## 📈 Статистика Мережі
+
+- **Поточна висота**: ~4760+ блоків
+- **Активні вузли**: Стабільна мережа
+- **Час блоку**: ~10 хвилин (як Bitcoin)
+- **Difficulty**: Автоматичне налаштування
+
+## 🔒 Безпека
+
+- Базується на Bitcoin Core
+- Перевірений код
+- SegWit підтримка
+- Захищені транзакції
+
+## 🆘 Підтримка
+
+### Часті Проблеми
+
+**Q: GUI не запускається**
+A: Переконайтеся що скомпільований проєкт: `make -j8`
+
+**Q: Майнінг не працює**
+A: Перевірте що демон запущений та синхронізований
+
+**Q: Немає підключень**
+A: Мережа автоматично підключиться, зачекайте 1-2 хвилини
+
+### Логи
+
+GUI логи знаходяться в:
+- macOS: `~/Library/Application Support/Krepto/debug.log`
+- Linux: `~/.krepto/debug.log`
+
+## 🏗️ Збірка з Вихідного Коду
+
+```bash
+# Встановлення залежностей (macOS)
+brew install autoconf automake libtool pkg-config
+
+# Компіляція
+./autogen.sh
+./configure
+make -j8
+
+# Запуск
+./src/qt/bitcoin-qt -datadir=/Users/serbinov/.krepto
+```
+
+## 📄 Ліцензія
+
+MIT License - дивіться файл COPYING для деталей.
+
+## 🌟 Особливості Krepto
+
+- **Простота**: Один клік для запуску майнінгу
+- **Автономність**: Не потребує зовнішніх сервісів
+- **Стабільність**: Базується на Bitcoin Core
+- **Швидкість**: Оптимізований для продуктивності
+- **Безпека**: Enterprise-grade захист
+
+---
+
+**Krepto - Майбутнє Криптовалют Сьогодні! 🚀**

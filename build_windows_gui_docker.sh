@@ -1,243 +1,163 @@
 #!/bin/bash
 
+# Krepto Windows Bitcoin Qt GUI Build using Docker
+# Native Windows build in Docker container
+
 set -e
 
-echo "🪟 Building Krepto Windows GUI with Docker (Optimized)..."
+echo "🚀 Krepto Windows Bitcoin Qt GUI Build - Docker Approach"
+echo "========================================================="
 
-# Перевірити чи встановлений Docker
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Configuration
+BUILD_DIR="$(pwd)"
+DOCKER_DIR="$BUILD_DIR/docker-windows-build"
+OUTPUT_DIR="$BUILD_DIR/docker-output"
+
+echo -e "${BLUE}Configuration:${NC}"
+echo "  Build directory: $BUILD_DIR"
+echo "  Docker directory: $DOCKER_DIR"
+echo "  Output directory: $OUTPUT_DIR"
+
+# Step 1: Check Docker availability
+echo -e "\n${YELLOW}Step 1: Checking Docker availability...${NC}"
+
 if ! command -v docker &> /dev/null; then
-    echo "❌ Docker not found. Please install Docker Desktop."
+    echo -e "${RED}❌ Docker not found. Please install Docker Desktop.${NC}"
+    echo "Download from: https://www.docker.com/products/docker-desktop"
     exit 1
 fi
 
-echo "✅ Docker found: $(docker --version)"
+# Check if Docker is running
+if ! docker info &> /dev/null; then
+    echo -e "${RED}❌ Docker is not running. Please start Docker Desktop.${NC}"
+    exit 1
+fi
 
-# Створити Dockerfile для Windows збірки з оптимізаціями
-echo "📝 Creating optimized Dockerfile for Windows build..."
-cat > Dockerfile.windows << 'EOF'
-FROM ubuntu:24.04
+echo -e "${GREEN}✅ Docker is available and running${NC}"
 
-# Встановити необхідні пакети (оптимізовано)
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libtool \
-    autotools-dev \
-    automake \
-    pkg-config \
-    bsdmainutils \
-    python3 \
-    curl \
-    git \
-    cmake \
-    mingw-w64 \
-    g++-mingw-w64-x86-64 \
-    gcc-mingw-w64-x86-64 \
-    ccache \
-    && rm -rf /var/lib/apt/lists/*
+# Step 2: Check Windows container support
+echo -e "\n${YELLOW}Step 2: Checking Windows container support...${NC}"
 
-# Налаштувати ccache для прискорення
-ENV CCACHE_DIR=/tmp/ccache
-ENV PATH="/usr/lib/ccache:$PATH"
-RUN ccache --max-size=2G
+# Switch to Windows containers if on Windows
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+    echo "Switching to Windows containers..."
+    docker version --format '{{.Server.Os}}' | grep -q windows || {
+        echo -e "${YELLOW}Switching Docker to Windows containers...${NC}"
+        # This requires Docker Desktop on Windows
+        powershell -Command "& 'C:\Program Files\Docker\Docker\DockerCli.exe' -SwitchDaemon"
+    }
+else
+    echo -e "${YELLOW}Note: Building Windows containers on macOS/Linux${NC}"
+    echo "This requires Docker Desktop with experimental features enabled"
+fi
 
-# Налаштувати mingw для C++20
-RUN update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
-RUN update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+# Step 3: Prepare Docker build context
+echo -e "\n${YELLOW}Step 3: Preparing Docker build context...${NC}"
 
-# Створити робочу директорію
-WORKDIR /krepto
+# Create output directory
+mkdir -p "$OUTPUT_DIR"
 
-# Копіювати тільки необхідні файли спочатку (для кешування Docker layers)
-COPY depends/ depends/
-COPY autogen.sh configure.ac Makefile.am ./
-COPY build-aux/ build-aux/
-COPY src/config/ src/config/
+# Copy source code to Docker context (excluding large directories)
+echo "Copying source code to Docker context..."
+rsync -av --exclude='.git' --exclude='depends/built' --exclude='depends/work' \
+    --exclude='src/.deps' --exclude='*.o' --exclude='*.exe' \
+    "$BUILD_DIR/" "$DOCKER_DIR/krepto/"
 
-# Збудувати залежності з оптимізаціями
-RUN cd depends && \
-    make HOST=x86_64-w64-mingw32 -j8 \
-    NO_UPNP=1 \
-    NO_NATPMP=1 \
-    NO_ZMQ=1
+echo -e "${GREEN}✅ Docker context prepared${NC}"
 
-# Тепер копіювати решту коду
-COPY . .
+# Step 4: Build Docker image
+echo -e "\n${YELLOW}Step 4: Building Docker image...${NC}"
+echo "This may take 30-60 minutes for the first build..."
 
-# Виправити ВСІ проблеми з іконками
-RUN mkdir -p src/qt/res/icons && \
-    echo "# Placeholder bitcoin.ico" > src/qt/res/icons/bitcoin.ico && \
-    echo "# Placeholder bitcoin_testnet.ico" > src/qt/res/icons/bitcoin_testnet.ico && \
-    echo "# Placeholder bitcoin_regtest.ico" > src/qt/res/icons/bitcoin_regtest.ico && \
-    echo "# Placeholder bitcoin_signet.ico" > src/qt/res/icons/bitcoin_signet.ico
+cd "$DOCKER_DIR"
 
-# Згенерувати configure
-RUN ./autogen.sh
+if ! docker build -t krepto-windows-builder .; then
+    echo -e "${RED}❌ Docker image build failed${NC}"
+    exit 1
+fi
 
-# Налаштувати збірку з оптимізаціями
-RUN CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site ./configure \
-    --prefix=/ \
-    --disable-tests \
-    --disable-bench \
-    --disable-fuzz-binary \
-    --disable-ccache \
-    --enable-gui \
-    --without-natpmp \
-    --without-miniupnpc \
-    --disable-zmq
+echo -e "${GREEN}✅ Docker image built successfully${NC}"
 
-# Збудувати з GUI (оптимізовано)
-RUN make -j8 V=0
+# Step 5: Run build in container
+echo -e "\n${YELLOW}Step 5: Running build in Windows container...${NC}"
+echo "This may take 30-60 minutes..."
 
-# Створити інсталятор
-RUN mkdir -p /output/Krepto-Windows-GUI && \
-    cp src/qt/bitcoin-qt.exe /output/Krepto-Windows-GUI/Krepto.exe && \
-    cp src/bitcoind.exe /output/Krepto-Windows-GUI/kryptod.exe && \
-    cp src/bitcoin-cli.exe /output/Krepto-Windows-GUI/krypto-cli.exe && \
-    cp src/bitcoin-tx.exe /output/Krepto-Windows-GUI/krypto-tx.exe && \
-    cp src/bitcoin-util.exe /output/Krepto-Windows-GUI/krypto-util.exe
+# Run the container with volume mounts
+docker run --rm \
+    -v "$OUTPUT_DIR:/host-output" \
+    krepto-windows-builder \
+    powershell -Command "
+        # Run the build
+        C:\build\build-windows-gui.ps1
+        
+        # Copy output to host
+        if (Test-Path 'C:\build\Krepto-Windows-GUI-Native.zip') {
+            Copy-Item 'C:\build\Krepto-Windows-GUI-Native.zip' '/host-output/'
+            Copy-Item 'C:\build\output\*' '/host-output/' -Recurse -Force
+            Write-Host 'Build artifacts copied to host' -ForegroundColor Green
+        } else {
+            Write-Error 'Build failed - no output package found'
+            exit 1
+        }
+    "
 
-# Копіювати тільки необхідні DLL файли
-RUN cp /usr/lib/gcc/x86_64-w64-mingw32/*/libgcc_s_seh-1.dll /output/Krepto-Windows-GUI/ 2>/dev/null || true && \
-    cp /usr/lib/gcc/x86_64-w64-mingw32/*/libstdc++-6.dll /output/Krepto-Windows-GUI/ 2>/dev/null || true && \
-    cp /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll /output/Krepto-Windows-GUI/ 2>/dev/null || true
+if [ $? -ne 0 ]; then
+    echo -e "${RED}❌ Container build failed${NC}"
+    exit 1
+fi
 
-CMD ["cp", "-r", "/output/Krepto-Windows-GUI", "/host/"]
-EOF
+echo -e "${GREEN}✅ Container build completed${NC}"
 
-# Збудувати Docker образ з кешуванням
-echo "🔨 Building Docker image with caching..."
-docker build -f Dockerfile.windows -t krepto-windows-gui .
+# Step 6: Verify output
+echo -e "\n${YELLOW}Step 6: Verifying build output...${NC}"
 
-# Запустити збірку
-echo "🚀 Running optimized Windows build..."
-docker run --rm -v $(pwd):/host krepto-windows-gui
-
-# Перевірити результат
-if [ -d "Krepto-Windows-GUI" ]; then
-    echo "✅ Windows GUI build completed!"
+if [ -f "$OUTPUT_DIR/Krepto-Windows-GUI-Native.zip" ]; then
+    echo -e "${GREEN}✅ Windows GUI package created successfully!${NC}"
     
-    # Додати конфігурацію та документацію
-    echo "📝 Adding configuration and documentation..."
+    # Calculate checksums
+    cd "$OUTPUT_DIR"
+    ZIP_SIZE=$(du -h "Krepto-Windows-GUI-Native.zip" | cut -f1)
+    SHA256=$(shasum -a 256 "Krepto-Windows-GUI-Native.zip" | cut -d' ' -f1)
+    MD5=$(md5 -q "Krepto-Windows-GUI-Native.zip")
     
-    # Копіювати конфігурацію з CLI версії
-    if [ -f "Krepto-Windows-CLI/bitcoin.conf" ]; then
-        cp Krepto-Windows-CLI/bitcoin.conf Krepto-Windows-GUI/
+    echo -e "\n${GREEN}🎉 Windows Bitcoin Qt GUI Build Complete!${NC}"
+    echo "=============================================="
+    echo -e "${BLUE}Package:${NC} Krepto-Windows-GUI-Native.zip"
+    echo -e "${BLUE}Size:${NC} $ZIP_SIZE"
+    echo -e "${BLUE}SHA256:${NC} $SHA256"
+    echo -e "${BLUE}MD5:${NC} $MD5"
+    
+    echo -e "\n${BLUE}Files in package:${NC}"
+    if command -v unzip &> /dev/null; then
+        unzip -l "Krepto-Windows-GUI-Native.zip" | head -20
     else
-        # Створити конфігурацію
-        cat > Krepto-Windows-GUI/bitcoin.conf << 'EOF'
-# Krepto Configuration
-rpcuser=kreptouser
-rpcpassword=kreptopass123
-rpcport=12347
-port=12345
-server=1
-daemon=1
-addnode=164.68.117.90:12345
-EOF
+        echo "Use 'unzip -l Krepto-Windows-GUI-Native.zip' to see contents"
     fi
     
-    # Створити README для GUI версії
-    cat > Krepto-Windows-GUI/README.txt << 'EOF'
-🚀 Krepto - Bitcoin Fork for Windows (GUI Version)
-
-INSTALLATION:
-1. Extract all files to a folder (e.g., C:\Krepto)
-2. Run Krepto.exe to start the GUI
-3. Wait for synchronization with Krepto network
-
-EXECUTABLES:
-- Krepto.exe - Main GUI application with built-in mining
-- kryptod.exe - Daemon (command line)
-- krypto-cli.exe - CLI tools
-- krypto-tx.exe - Transaction tools
-- krypto-util.exe - Utility tools
-
-NETWORK INFO:
-- Krepto uses its own blockchain (not Bitcoin)
-- Connects to seed node: 164.68.117.90:12345
-- Data stored in: %APPDATA%\Krepto\
-- Addresses start with 'K' (legacy) or 'kr1q' (SegWit)
-
-FEATURES:
-- GUI Mining built-in (Mining menu)
-- SegWit support from genesis
-- Fast block generation
-- Compatible with Bitcoin Core RPC
-- Modern Qt5 interface
-
-CONFIGURATION:
-- Config file: %APPDATA%\Krepto\bitcoin.conf
-- Logs: %APPDATA%\Krepto\debug.log
-- Network: Krepto mainnet (port 12345)
-
-MINING:
-1. Open Krepto.exe
-2. Go to Mining menu
-3. Click "Start Mining"
-4. Enjoy mining Krepto! ⛏️
-
-SUPPORT:
-- Check debug.log for troubleshooting
-- Ensure port 12345 is not blocked by firewall
-- For help, check the configuration file
-
-Enjoy mining Krepto with GUI! 🎉
-EOF
-
-    # Створити batch файли для зручності
-    cat > Krepto-Windows-GUI/start-gui.bat << 'EOF'
-@echo off
-echo Starting Krepto GUI...
-start Krepto.exe
-EOF
-
-    cat > Krepto-Windows-GUI/start-daemon.bat << 'EOF'
-@echo off
-echo Starting Krepto daemon...
-kryptod.exe -daemon
-echo Daemon started. Use krypto-cli.exe for commands.
-pause
-EOF
-
-    cat > Krepto-Windows-GUI/stop-daemon.bat << 'EOF'
-@echo off
-echo Stopping Krepto daemon...
-krypto-cli.exe stop
-echo Daemon stopped.
-pause
-EOF
-
-    # Створити ZIP архів
-    echo "📦 Creating ZIP archive..."
-    zip -r Krepto-Windows-GUI.zip Krepto-Windows-GUI/
-    
-    # Показати результат
-    echo "📊 Build results:"
-    ls -lh Krepto-Windows-GUI.zip
-    du -sh Krepto-Windows-GUI/
-    
-    echo ""
-    echo "🎊 Krepto Windows GUI build completed successfully!"
+    echo -e "\n${GREEN}✅ Ready for Windows deployment!${NC}"
+    echo -e "${YELLOW}Location: $OUTPUT_DIR/Krepto-Windows-GUI-Native.zip${NC}"
     
 else
-    echo "❌ Windows GUI build failed!"
+    echo -e "${RED}❌ Build failed - no output package found${NC}"
+    echo "Check Docker logs for errors"
     exit 1
 fi
 
-# Очистити тимчасові файли
-echo "🧹 Cleaning up..."
-rm -f Dockerfile.windows
-docker rmi krepto-windows-gui 2>/dev/null || true
+# Step 7: Cleanup (optional)
+echo -e "\n${YELLOW}Step 7: Cleanup...${NC}"
+read -p "Remove Docker build context? (y/N): " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    rm -rf "$DOCKER_DIR/krepto"
+    echo -e "${GREEN}✅ Build context cleaned${NC}"
+fi
 
-echo ""
-echo "🎯 Next steps:"
-echo "1. Test Krepto-Windows-GUI.zip on Windows VM"
-echo "2. Create NSIS installer (optional)"
-echo "3. Upload for distribution"
-echo ""
-echo "⚡ Optimizations applied:"
-echo "- ccache for faster compilation"
-echo "- Disabled unnecessary features (UPnP, ZMQ, tests)"
-echo "- Docker layer caching"
-echo "- Fixed all icon file issues"
-echo "- Reduced verbose output" 
+echo -e "\n${BLUE}Docker Windows build process completed.${NC}"
+echo -e "${GREEN}🎊 Krepto Windows Bitcoin Qt GUI is ready!${NC}" 

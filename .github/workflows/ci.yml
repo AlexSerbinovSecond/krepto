@@ -317,3 +317,26 @@ jobs:
         #   BITCOINFUZZ: "${{ github.workspace}}\\src\\fuzz.exe"
         # shell: cmd
         # run: py -3 test\fuzz\test_runner.py --par %NUMBER_OF_PROCESSORS% --loglevel DEBUG %RUNNER_TEMP%\qa-assets\fuzz_seed_corpus
+
+      - name: Create Windows GUI package
+        shell: cmd
+        run: |
+          mkdir Krepto-Windows-GUI
+          copy build_msvc\Release\*.exe Krepto-Windows-GUI\
+          copy build_msvc\Release\*.dll Krepto-Windows-GUI\ 2>NUL || echo "No DLLs to copy"
+          echo seed=164.68.117.90:12345 > Krepto-Windows-GUI\bitcoin.conf
+          echo seed=5.189.133.204:12345 >> Krepto-Windows-GUI\bitcoin.conf
+          echo rpcuser=krepto >> Krepto-Windows-GUI\bitcoin.conf
+          echo rpcpassword=krepto123 >> Krepto-Windows-GUI\bitcoin.conf
+          echo server=1 >> Krepto-Windows-GUI\bitcoin.conf
+          echo Complete Krepto Windows GUI package with dual seed nodes > Krepto-Windows-GUI\README.txt
+          echo bitcoin-qt.exe = Main GUI application ^(rename to krepto-qt.exe^) >> Krepto-Windows-GUI\README.txt
+          echo bitcoind.exe = Daemon ^(rename to kryptod.exe^) >> Krepto-Windows-GUI\README.txt
+          echo bitcoin-cli.exe = CLI interface ^(rename to krepto-cli.exe^) >> Krepto-Windows-GUI\README.txt
+
+      - name: Upload Windows GUI artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Krepto-Windows-GUI
+          path: Krepto-Windows-GUI/
+          retention-days: 30

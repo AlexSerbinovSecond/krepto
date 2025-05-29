@@ -14,6 +14,9 @@ endif
 
 EXTRA_LIBRARIES += $(MINISKETCH_LIBS)
 
+# Add minisketch test sources to EXTRA_DIST for make distdir
+EXTRA_DIST += $(MINISKETCH_TEST_SOURCES_INT) $(MINISKETCH_BENCH_SOURCES_INT)
+
 minisketch_libminisketch_clmul_a_SOURCES = $(MINISKETCH_FIELD_CLMUL_SOURCES_INT) $(MINISKETCH_FIELD_CLMUL_HEADERS_INT)
 minisketch_libminisketch_clmul_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS) $(CLMUL_CXXFLAGS)
 minisketch_libminisketch_clmul_a_CPPFLAGS = $(AM_CPPFLAGS) $(LIBMINISKETCH_CPPFLAGS)

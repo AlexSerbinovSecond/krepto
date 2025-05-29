@@ -311,28 +311,28 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			hocQk0DSqTFvY2nV2LdL1rtcShI=
+			9BW0BJRwgsd6axfwxhLxdgoOUj8=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"8687109340d2a9316f6369d5d8b74bd6bb5c4a12"</string>
+			<string>cdhash H"f415b404947082c77a6b17f0c612f1760a0e523f"</string>
 		</dict>
 		<key>MacOS/krypto-cli</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			xa1s5jL7ZNGWN2SkYarrJ75458M=
+			/M3X4vMu1ByWYD4yWE+x/Ash9Ac=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"c5ad6ce632fb64d1963764a461aaeb27be78e7c3"</string>
+			<string>cdhash H"fccdd7e2f32ed41c96603e32584fb1fc0b21f407"</string>
 		</dict>
 		<key>MacOS/kryptod</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			/fgIQS/sZaUPnx1CF0rEn0Js8P0=
+			lvvu1dMiG0gvXkAZvht+sYe5QGw=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"fdf808412fec65a50f9f1d42174ac49f426cf0fd"</string>
+			<string>cdhash H"96fbeed5d3221b482f5e4019be1b7eb187b9406c"</string>
 		</dict>
 		<key>PlugIns/bearer/libqgenericbearer.dylib</key>
 		<dict>

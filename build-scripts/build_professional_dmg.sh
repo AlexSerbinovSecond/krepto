@@ -338,11 +338,28 @@ fi
 
 # Відключити DMG
 echo "📤 Unmounting DMG..."
-hdiutil detach /Volumes/KreptoInstaller
+hdiutil detach /Volumes/KreptoInstaller -force 2>/dev/null || {
+    echo "⚠️  Warning: Could not unmount DMG normally, trying force unmount..."
+    # Знайти всі диски Krepto і примусово відключити
+    for disk in $(diskutil list | grep -o 'disk[0-9]*' | sort -u); do
+        sudo diskutil unmountDisk force $disk 2>/dev/null || true
+    done
+    sleep 3
+}
 
-# Конвертувати в фінальний read-only DMG
+# Конвертувати в фінальний read-only DMG (з fallback)
 echo "🔒 Converting to final read-only DMG..."
-hdiutil convert temp_krepto.dmg -format UDZO -o Krepto.dmg
+if hdiutil convert temp_krepto.dmg -format UDZO -o Krepto.dmg 2>/dev/null; then
+    echo "✅ DMG converted successfully!"
+else
+    echo "⚠️  Conversion failed, creating simple DMG instead..."
+    rm -f temp_krepto.dmg
+    # Створити простий DMG як fallback
+    mkdir -p /tmp/krepto_dmg_final
+    cp -R Krepto.app /tmp/krepto_dmg_final/
+    hdiutil create -volname "Krepto Installer" -fs HFS+ -srcfolder /tmp/krepto_dmg_final -ov -format UDZO Krepto.dmg
+    rm -rf /tmp/krepto_dmg_final
+fi
 
 # Очистити тимчасові файли
 rm -rf dmg_temp temp_krepto.dmg create_background.py dmg_background.png

@@ -96,6 +96,7 @@ Makefile
 !src/qt/Makefile
 !src/qt/test/Makefile
 !src/test/Makefile
+!src/minisketch/Makefile
 src/qt/bitcoin-qt
 Bitcoin-Qt.app
 

@@ -339,10 +339,34 @@ jobs:
         run: |
           if exist Krepto-Windows-GUI rmdir /s /q Krepto-Windows-GUI
           mkdir Krepto-Windows-GUI
-          copy src\*.exe Krepto-Windows-GUI\ >nul 2>&1 || echo "Copying from src..."
-          copy build_msvc\src\Release\*.exe Krepto-Windows-GUI\ >nul 2>&1 || echo "Copying from build_msvc\src\Release..."
-          copy *.exe Krepto-Windows-GUI\ >nul 2>&1 || echo "Copying from root..."
+          echo "=== Copying executables from multiple locations ==="
+          
+          REM Copy from src directory (CLI tools built with autotools)
+          if exist src\bitcoind.exe copy src\bitcoind.exe Krepto-Windows-GUI\
+          if exist src\bitcoin-cli.exe copy src\bitcoin-cli.exe Krepto-Windows-GUI\
+          if exist src\bitcoin-tx.exe copy src\bitcoin-tx.exe Krepto-Windows-GUI\
+          if exist src\bitcoin-util.exe copy src\bitcoin-util.exe Krepto-Windows-GUI\
+          if exist src\bitcoin-wallet.exe copy src\bitcoin-wallet.exe Krepto-Windows-GUI\
+          if exist src\test_bitcoin.exe copy src\test_bitcoin.exe Krepto-Windows-GUI\
+          if exist src\bench_bitcoin.exe copy src\bench_bitcoin.exe Krepto-Windows-GUI\
+          if exist src\fuzz.exe copy src\fuzz.exe Krepto-Windows-GUI\
+          
+          REM Copy bitcoin-qt.exe from MSBuild output directory (GUI built with MSBuild)
+          if exist build_msvc\x64\Release\bitcoin-qt.exe copy build_msvc\x64\Release\bitcoin-qt.exe Krepto-Windows-GUI\
+          
+          REM Show what we copied
+          echo "=== Contents of Krepto-Windows-GUI directory ==="
           dir Krepto-Windows-GUI\
+          
+          REM Check if we have the main GUI executable
+          if exist Krepto-Windows-GUI\bitcoin-qt.exe (
+            echo "SUCCESS: bitcoin-qt.exe found in package!"
+          ) else (
+            echo "ERROR: bitcoin-qt.exe missing from package!"
+            echo "=== Searching for bitcoin-qt.exe in all locations ==="
+            dir /s bitcoin-qt.exe 2>nul || echo "bitcoin-qt.exe not found anywhere!"
+          )
+          
           echo seed=164.68.117.90:12345 > Krepto-Windows-GUI\bitcoin.conf
           echo seed=5.189.133.204:12345 >> Krepto-Windows-GUI\bitcoin.conf
           echo rpcuser=krepto >> Krepto-Windows-GUI\bitcoin.conf

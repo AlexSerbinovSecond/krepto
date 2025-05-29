@@ -1048,8 +1048,7 @@ static RPCHelpMan submitblock()
         }
     }
 
-    NodeContext& node = EnsureAnyNodeContext(request.context);
-    Mining& miner = EnsureMining(node);
+    Mining& miner = EnsureMining(EnsureAnyNodeContext(request.context));
 
     bool new_block;
     auto sc = std::make_shared<submitblock_StateCatcher>(block.GetHash());

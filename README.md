@@ -4,7 +4,7 @@
 
 ![Krepto Logo](share/pixmaps/bitcoin128.png)
 
-**The Next Generation Cryptocurrency Based on Bitcoin Core Technology**
+**The Next Generation Cryptocurrency Built for Everyone**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Network Status](https://img.shields.io/badge/Network-Active-green)](https://github.com/AlexSerbinov/krepto-bitcoin-fork)
@@ -18,11 +18,11 @@
 
 ## 🎯 What is Krepto?
 
-**Krepto** is a modern cryptocurrency built on the proven foundation of Bitcoin Core technology. Designed for simplicity and reliability, Krepto offers a complete digital currency experience with:
+**Krepto** is a modern cryptocurrency designed for simplicity, security, and accessibility. Built with enterprise-grade technology and user-friendly features, Krepto offers a complete digital currency experience with:
 
-- **🔒 Enterprise-grade Security** - Built on Bitcoin Core's battle-tested codebase
+- **🔒 Enterprise-grade Security** - Built on proven cryptographic algorithms
 - **⚡ Fast Mining** - Optimized for efficient block generation  
-- **💎 SegWit Ready** - Advanced transaction capabilities from day one
+- **💎 Advanced Features** - Modern transaction capabilities from day one
 - **🖥️ User-Friendly GUI** - Mine and manage your coins with one click
 - **🌐 Standalone Operation** - No technical knowledge required
 
@@ -35,8 +35,8 @@
 - **Smart Address Management** - Automatic mining address creation
 
 ### 🛡️ Advanced Security
-- **SegWit Enabled** - Enhanced transaction security and efficiency
-- **Proven Codebase** - Based on Bitcoin Core v24+ technology
+- **Enhanced Transactions** - Modern transaction security and efficiency
+- **Proven Algorithms** - Based on industry-standard cryptographic methods
 - **Network Isolation** - Independent Krepto network for maximum security
 - **HD Wallets** - Hierarchical deterministic wallet support
 
@@ -52,7 +52,7 @@
 **Krepto.dmg** - Complete GUI Application (38 MB)
 - **One-click installation** with drag-and-drop interface
 - **Built-in mining** capabilities
-- **Professional installer** with automatic Qt5 framework inclusion
+- **Professional installer** with automatic framework inclusion
 - **Code signed** for macOS security
 
 ```
@@ -153,8 +153,8 @@ On first launch, Krepto will download the blockchain:
 | **Magic Bytes** | KREP (0x4b524550) |
 | **Genesis Hash** | `00000d2843e19d3f61aaf31f1f919a1be17fc1b814d43117f8f8a4b602a559f2` |
 | **Genesis Message** | "Crypto is now Krepto" |
-| **SegWit** | Active from genesis |
-| **Address Prefix** | K (legacy), kr1q (bech32) |
+| **Advanced Features** | Active from genesis |
+| **Address Prefix** | K (legacy), kr1q (modern) |
 
 ### Network Nodes
 
@@ -164,8 +164,8 @@ On first launch, Krepto will download the blockchain:
 ## 🔐 Wallet Features
 
 ### Address Types
-- **Legacy Addresses** (K...) - Traditional Bitcoin-style addresses
-- **SegWit Addresses** (kr1q...) - Lower fees, enhanced features
+- **Legacy Addresses** (K...) - Traditional cryptocurrency addresses
+- **Modern Addresses** (kr1q...) - Lower fees, enhanced features
 - **HD Wallet** - Hierarchical deterministic address generation
 
 ### Security Features
@@ -177,17 +177,17 @@ On first launch, Krepto will download the blockchain:
 ## 📊 Technical Specifications
 
 ### Performance
-- **Mining Algorithm**: SHA-256 (Bitcoin-compatible)
+- **Mining Algorithm**: SHA-256 (industry standard)
 - **Block Time**: ~10 minutes target
 - **Difficulty Adjustment**: Every block with MaxRise 4x limit
-- **Transaction Throughput**: Bitcoin Core compatible
+- **Transaction Throughput**: High-performance processing
 - **Memory Usage**: Optimized for desktop systems
 
 ### Compatibility
-- **RPC Interface**: Full Bitcoin Core compatibility
-- **P2P Protocol**: Custom Krepto network
-- **Transaction Format**: Standard Bitcoin transactions
-- **Script Support**: Full Bitcoin script functionality
+- **RPC Interface** - Full JSON-RPC compatibility
+- **P2P Protocol** - Custom Krepto network
+- **Transaction Format** - Standard cryptocurrency transactions
+- **Script Support** - Full scripting functionality
 
 ## 🛠️ Advanced Configuration
 
@@ -266,7 +266,7 @@ genproclimit=4
 
 ### Development Team
 - **Lead Developer**: Alex Serbinov
-- **Based on**: Bitcoin Core technology
+- **Technology**: Enterprise-grade cryptocurrency technology
 - **License**: MIT License
 
 ## 🎉 Success Stories
@@ -286,7 +286,7 @@ genproclimit=4
 - **Comprehensive Documentation**
 
 ### ✅ For Advanced Users  
-- **Full Bitcoin Core Compatibility**
+- **Full Cryptocurrency Compatibility**
 - **Complete RPC Interface**
 - **Source Code Available**
 - **Customizable Configuration**

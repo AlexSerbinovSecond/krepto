@@ -311,28 +311,28 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			1d6nGC0e267+jqxXc7Rw3t7aEOc=
+			j8zBOvyfICaHZ0q/B1VvitehNlE=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"d5dea7182d1edbaefe8eac5773b470dededa10e7"</string>
+			<string>cdhash H"8fccc13afc9f202687674abf07556f8ad7a13651"</string>
 		</dict>
 		<key>MacOS/krypto-cli</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			iVa41YmIMqzpJl+b0LJ72/MqD2c=
+			3TwRiVhMwxhBLl4V9CL2slU/ETA=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"8956b8d5898832ace9265f9bd0b27bdbf32a0f67"</string>
+			<string>cdhash H"dd3c1189584cc318412e5e15f422f6b2553f1130"</string>
 		</dict>
 		<key>MacOS/kryptod</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			Zzw5PArnTcgjFnUDjr3lQkzVN1o=
+			VvhvTsoKM/KSlCmj7JUDi06PAZQ=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"673c393c0ae74dc8231675038ebde5424cd5375a"</string>
+			<string>cdhash H"56f86f4eca0a33f2929429a3ec95038b4e8f0194"</string>
 		</dict>
 		<key>PlugIns/bearer/libqgenericbearer.dylib</key>
 		<dict>

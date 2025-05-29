@@ -215,8 +215,8 @@ jobs:
           SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
           KREPTO_DATADIR="$HOME/.krepto"
           mkdir -p "$KREPTO_DATADIR"
-          if [ ! -f "$KREPTO_DATADIR/bitcoin.conf" ]; then
-              cp "$SCRIPT_DIR/../Resources/bitcoin.conf" "$KREPTO_DATADIR/" 2>/dev/null || true
+          if [ ! -f "$KREPTO_DATADIR/krepto.conf" ]; then
+              cp "$SCRIPT_DIR/../Resources/krepto.conf" "$KREPTO_DATADIR/" 2>/dev/null || true
           fi
           exec "$SCRIPT_DIR/bitcoin-qt" -datadir="$KREPTO_DATADIR" "$@"
           EOF
@@ -251,7 +251,7 @@ jobs:
           
           # Create configuration
           echo "⚙️ Creating Krepto network configuration..."
-          cat > Krepto.app/Contents/Resources/bitcoin.conf << 'EOF'
+          cat > Krepto.app/Contents/Resources/krepto.conf << 'EOF'
           # Krepto Client Configuration
           
           # Network Settings
@@ -624,25 +624,25 @@ jobs:
             dir /s bitcoin-qt.exe 2>nul || echo "bitcoin-qt.exe not found anywhere!"
           )
           
-          REM Create proper bitcoin.conf with correct Krepto settings
-          echo # Krepto Network Configuration > Krepto-Windows-GUI\bitcoin.conf
-          echo addnode=164.68.117.90:12345 >> Krepto-Windows-GUI\bitcoin.conf
-          echo addnode=5.189.133.204:12345 >> Krepto-Windows-GUI\bitcoin.conf
-          echo rpcport=12347 >> Krepto-Windows-GUI\bitcoin.conf
-          echo port=12345 >> Krepto-Windows-GUI\bitcoin.conf
-          echo rpcuser=krepto >> Krepto-Windows-GUI\bitcoin.conf
-          echo rpcpassword=krepto123 >> Krepto-Windows-GUI\bitcoin.conf
-          echo server=1 >> Krepto-Windows-GUI\bitcoin.conf
-          echo # Network settings >> Krepto-Windows-GUI\bitcoin.conf
-          echo listen=1 >> Krepto-Windows-GUI\bitcoin.conf
-          echo maxconnections=125 >> Krepto-Windows-GUI\bitcoin.conf
+          REM Create proper krepto.conf with correct Krepto settings
+          echo # Krepto Network Configuration > Krepto-Windows-GUI\krepto.conf
+          echo addnode=164.68.117.90:12345 >> Krepto-Windows-GUI\krepto.conf
+          echo addnode=5.189.133.204:12345 >> Krepto-Windows-GUI\krepto.conf
+          echo rpcport=12347 >> Krepto-Windows-GUI\krepto.conf
+          echo port=12345 >> Krepto-Windows-GUI\krepto.conf
+          echo rpcuser=krepto >> Krepto-Windows-GUI\krepto.conf
+          echo rpcpassword=krepto123 >> Krepto-Windows-GUI\krepto.conf
+          echo server=1 >> Krepto-Windows-GUI\krepto.conf
+          echo # Network settings >> Krepto-Windows-GUI\krepto.conf
+          echo listen=1 >> Krepto-Windows-GUI\krepto.conf
+          echo maxconnections=125 >> Krepto-Windows-GUI\krepto.conf
           echo Complete Krepto Windows GUI package with dual seed nodes > Krepto-Windows-GUI\README.txt
           echo bitcoin-qt.exe = Main GUI application ^(rename to krepto-qt.exe^) >> Krepto-Windows-GUI\README.txt
           echo bitcoind.exe = Daemon ^(rename to kryptod.exe^) >> Krepto-Windows-GUI\README.txt
           echo bitcoin-cli.exe = CLI interface ^(rename to krepto-cli.exe^) >> Krepto-Windows-GUI\README.txt
           echo. >> Krepto-Windows-GUI\README.txt
           echo CONFIGURATION: >> Krepto-Windows-GUI\README.txt
-          echo Copy bitcoin.conf to data directory or place in same folder as executable >> Krepto-Windows-GUI\README.txt
+          echo Copy krepto.conf to data directory or place in same folder as executable >> Krepto-Windows-GUI\README.txt
           echo Windows data directory: %%APPDATA%%\Krepto\ >> Krepto-Windows-GUI\README.txt
 
       - name: Upload Windows GUI artifacts

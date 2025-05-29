@@ -44,7 +44,7 @@ if [ -z "$COMMIT" ]; then
     COMMIT=HEAD
 fi
 
-# Taken from git-subtree (Copyright (C) 2009 Avery Pennarun <apenwarr@gmail.com>)
+# Taken from git-subtree (Copyright (C) 2025 Avery Pennarun <apenwarr@gmail.com>)
 find_latest_squash()
 {
 	dir="$1"

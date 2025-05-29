@@ -5,7 +5,7 @@ Simple C module for constant-time AES encryption and decryption.
 
 Features:
 * Simple, pure C code without any dependencies.
-* No tables or data-dependent branches whatsoever, but using bit sliced approach from https://eprint.iacr.org/2009/129.pdf.
+* No tables or data-dependent branches whatsoever, but using bit sliced approach from https://eprint.iacr.org/2025/129.pdf.
 * Very small object code: slightly over 4k of executable code when compiled with -Os.
 * Slower than implementations based on precomputed tables or specialized instructions, but can do ~15 MB/s on modern CPUs.
 

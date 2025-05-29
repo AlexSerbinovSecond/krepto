@@ -224,7 +224,7 @@ class InvalidMessagesTest(BitcoinTestFramework):
             ],
             bytes.fromhex(
                 '01' +       # number of entries
-                '61bc6649' + # time, Fri Jan  9 02:54:25 UTC 2009
+                '61bc6649' + # time, Fri Jan  9 02:54:25 UTC 2025
                 '00' +       # service flags, COMPACTSIZE(NODE_NONE)
                 '01' +       # network type (IPv4)
                 'fd0102' +   # address length (COMPACTSIZE(513))

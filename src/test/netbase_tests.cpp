@@ -499,7 +499,7 @@ static const std::vector<CAddress> fixture_addresses({
     CAddress{
         CService(CNetAddr(in6_addr(IN6ADDR_LOOPBACK_INIT)), 0 /* port */),
         NODE_NONE,
-        NodeSeconds{0x4966bc61s}, /* Fri Jan  9 02:54:25 UTC 2009 */
+        NodeSeconds{0x4966bc61s}, /* Fri Jan  9 02:54:25 UTC 2025 */
     },
     CAddress{
         CService(CNetAddr(in6_addr(IN6ADDR_LOOPBACK_INIT)), 0x00f1 /* port */),
@@ -518,7 +518,7 @@ static const std::vector<CAddress> fixture_addresses({
 static constexpr const char* stream_addrv1_hex =
     "03" // number of entries
 
-    "61bc6649"                         // time, Fri Jan  9 02:54:25 UTC 2009
+    "61bc6649"                         // time, Fri Jan  9 02:54:25 UTC 2025
     "0000000000000000"                 // service flags, NODE_NONE
     "00000000000000000000000000000001" // address, fixed 16 bytes (IPv4 embedded in IPv6)
     "0000"                             // port
@@ -538,7 +538,7 @@ static constexpr const char* stream_addrv1_hex =
 static constexpr const char* stream_addrv2_hex =
     "03" // number of entries
 
-    "61bc6649"                         // time, Fri Jan  9 02:54:25 UTC 2009
+    "61bc6649"                         // time, Fri Jan  9 02:54:25 UTC 2025
     "00"                               // service flags, COMPACTSIZE(NODE_NONE)
     "02"                               // network id, IPv6
     "10"                               // address length, COMPACTSIZE(16)

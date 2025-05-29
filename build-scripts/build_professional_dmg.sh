@@ -78,7 +78,7 @@ cp src/bitcoin-cli Krepto.app/Contents/MacOS/krypto-cli
 
 # Створити wrapper скрипт
 echo "📝 Creating wrapper script..."
-mv Krepto.app/Contents/MacOS/Krepto Krepto.app/Contents/MacOS/bitcoin-qt
+mv Krepto.app/Contents/MacOS/Krepto Krepto.app/Contents/MacOS/krepto-qt
 
 cat > Krepto.app/Contents/MacOS/Krepto << 'EOF'
 #!/bin/bash
@@ -88,7 +88,7 @@ mkdir -p "$KREPTO_DATADIR"
 if [ ! -f "$KREPTO_DATADIR/bitcoin.conf" ]; then
     cp "$SCRIPT_DIR/../Resources/bitcoin.conf" "$KREPTO_DATADIR/" 2>/dev/null || true
 fi
-exec "$SCRIPT_DIR/bitcoin-qt" -datadir="$KREPTO_DATADIR" "$@"
+exec "$SCRIPT_DIR/krepto-qt" -datadir="$KREPTO_DATADIR" "$@"
 EOF
 
 chmod +x Krepto.app/Contents/MacOS/*

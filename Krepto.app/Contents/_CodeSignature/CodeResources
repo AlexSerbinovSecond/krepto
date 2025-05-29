@@ -307,32 +307,32 @@
 			<key>requirement</key>
 			<string>cdhash H"ce0b4db54e58cb9dad7a39588ebbe148954aa00e"</string>
 		</dict>
-		<key>MacOS/bitcoin-qt</key>
+		<key>MacOS/krepto-qt</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			DWbmS09bnhjf5t/CtfT7updeL+E=
+			hocQk0DSqTFvY2nV2LdL1rtcShI=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"0d66e64b4f5b9e18dfe6dfc2b5f4fbba975e2fe1"</string>
+			<string>cdhash H"8687109340d2a9316f6369d5d8b74bd6bb5c4a12"</string>
 		</dict>
 		<key>MacOS/krypto-cli</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			fNvr23SmrzhJ0XWK50Fltw7JeBc=
+			xa1s5jL7ZNGWN2SkYarrJ75458M=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"7cdbebdb74a6af3849d1758ae74165b70ec97817"</string>
+			<string>cdhash H"c5ad6ce632fb64d1963764a461aaeb27be78e7c3"</string>
 		</dict>
 		<key>MacOS/kryptod</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			MXvA5kBcneuRU9nrhpmbsBq8qwE=
+			/fgIQS/sZaUPnx1CF0rEn0Js8P0=
 			</data>
 			<key>requirement</key>
-			<string>cdhash H"317bc0e6405c9deb9153d9eb86999bb01abcab01"</string>
+			<string>cdhash H"fdf808412fec65a50f9f1d42174ac49f426cf0fd"</string>
 		</dict>
 		<key>PlugIns/bearer/libqgenericbearer.dylib</key>
 		<dict>

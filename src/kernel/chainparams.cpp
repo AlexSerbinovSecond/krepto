@@ -145,13 +145,13 @@ public:
         // Krepto seed nodes
         vSeeds.emplace_back("164.68.117.90"); // Main Krepto seed node
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,45); // Krepto addresses start with 'K'
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,50); // Krepto script addresses start with 'M'
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,173); // Krepto private keys
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,0);   // Bitcoin addresses start with '1'
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,5);   // Bitcoin script addresses start with '3'
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,128); // Bitcoin private keys
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x88, 0xB2, 0x1E};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x88, 0xAD, 0xE4};
 
-        bech32_hrp = "kr";
+        bech32_hrp = "bc";
 
         vFixedSeeds = std::vector<uint8_t>(std::begin(chainparams_seed_main), std::end(chainparams_seed_main));
 

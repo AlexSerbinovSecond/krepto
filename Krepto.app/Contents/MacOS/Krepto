@@ -5,4 +5,4 @@ mkdir -p "$KREPTO_DATADIR"
 if [ ! -f "$KREPTO_DATADIR/bitcoin.conf" ]; then
     cp "$SCRIPT_DIR/../Resources/bitcoin.conf" "$KREPTO_DATADIR/" 2>/dev/null || true
 fi
-exec "$SCRIPT_DIR/bitcoin-qt" -datadir="$KREPTO_DATADIR" "$@"
+exec "$SCRIPT_DIR/krepto-qt" -datadir="$KREPTO_DATADIR" "$@"

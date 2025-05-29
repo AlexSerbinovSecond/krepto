@@ -85,8 +85,8 @@ cat > Krepto.app/Contents/MacOS/Krepto << 'EOF'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KREPTO_DATADIR="$HOME/.krepto"
 mkdir -p "$KREPTO_DATADIR"
-if [ ! -f "$KREPTO_DATADIR/bitcoin.conf" ]; then
-    cp "$SCRIPT_DIR/../Resources/bitcoin.conf" "$KREPTO_DATADIR/" 2>/dev/null || true
+if [ ! -f "$KREPTO_DATADIR/krepto.conf" ]; then
+    cp "$SCRIPT_DIR/../Resources/krepto.conf" "$KREPTO_DATADIR/" 2>/dev/null || true
 fi
 exec "$SCRIPT_DIR/krepto-qt" -datadir="$KREPTO_DATADIR" "$@"
 EOF
@@ -121,7 +121,7 @@ fi
 
 # Створити конфігурацію
 echo "⚙️ Creating Krepto network configuration..."
-cat > Krepto.app/Contents/Resources/bitcoin.conf << 'EOF'
+cat > Krepto.app/Contents/Resources/krepto.conf << 'EOF'
 # Krepto Client Configuration
 
 # Network Settings

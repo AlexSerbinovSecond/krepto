@@ -1138,7 +1138,7 @@ static RPCHelpMan startmining()
     if (threads < 1 || threads > 16) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Error: threads must be between 1 and 16");
     }
-
+    
     // Start mining in background
     // TODO: Implement actual mining thread management
     

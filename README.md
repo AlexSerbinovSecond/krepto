@@ -151,7 +151,7 @@ On first launch, Krepto will download the blockchain:
 | **Network Port** | 12345 |
 | **RPC Port** | 12347 |
 | **Magic Bytes** | KREP (0x4b524550) |
-| **Genesis Hash** | `00000d2843e19d3f61aaf31f1f919a1be17fc1b814d43117f8f8a4b602a559f2` |
+| **Genesis Hash** | `3f5a49945b1be2da6541af9d90434c6cad4923d25141a5b77c4c064584b2865c` |
 | **Genesis Message** | "Crypto is now Krepto" |
 | **Advanced Features** | Active from genesis |
 | **Address Prefix** | K (legacy), kr1q (modern) |

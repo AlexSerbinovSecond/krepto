@@ -7,8 +7,8 @@
 **The Next Generation Cryptocurrency Built for Everyone**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Network Status](https://img.shields.io/badge/Network-Active-green)](https://github.com/AlexSerbinov/krepto-bitcoin-fork)
-[![Latest Release](https://img.shields.io/badge/Version-v1.0-blue)](https://github.com/AlexSerbinov/krepto-bitcoin-fork/releases)
+[![Network Status](https://img.shields.io/badge/Network-Active-green)](https://github.com/AlexSerbinov/krepto)
+[![Latest Release](https://img.shields.io/badge/Version-v1.0-blue)](https://github.com/AlexSerbinov/krepto/releases)
 
 [Download](#-downloads) • [Installation](#-installation) • [Mining Guide](#-mining-guide) • [Support](#-support)
 
@@ -66,7 +66,7 @@ SHA256: 7cc95a0a458e6e46cee0019eb087a0c03ca5c39e1fbeb62cd057dbed4660a224
 - **krepto-cli.exe** - Command line interface
 - **Configuration files** included with optimized settings
 
-> 📥 **Download from**: [GitHub Releases](https://github.com/AlexSerbinov/krepto-bitcoin-fork/releases)
+> 📥 **Download from**: [GitHub Releases](https://github.com/AlexSerbinov/krepto/releases)
 
 ## 🔧 Installation
 
@@ -260,9 +260,9 @@ genproclimit=4
 ## 📞 Support
 
 ### Community Resources
-- **GitHub Issues**: [Report bugs and feature requests](https://github.com/AlexSerbinov/krepto-bitcoin-fork/issues)
-- **Documentation**: [Technical documentation](https://github.com/AlexSerbinov/krepto-bitcoin-fork/docs)
-- **Source Code**: [Open source on GitHub](https://github.com/AlexSerbinov/krepto-bitcoin-fork)
+- **GitHub Issues**: [Report bugs and feature requests](https://github.com/AlexSerbinov/krepto/issues)
+- **Documentation**: [Technical documentation](https://github.com/AlexSerbinov/krepto/docs)
+- **Source Code**: [Open source on GitHub](https://github.com/AlexSerbinov/krepto)
 
 ### Development Team
 - **Lead Developer**: Alex Serbinov
@@ -303,7 +303,7 @@ genproclimit=4
 
 ## 🎊 Start Your Krepto Journey Today!
 
-**[Download Krepto](https://github.com/AlexSerbinov/krepto-bitcoin-fork/releases)** • **[View Source Code](https://github.com/AlexSerbinov/krepto-bitcoin-fork)** • **[Report Issues](https://github.com/AlexSerbinov/krepto-bitcoin-fork/issues)**
+**[Download Krepto](https://github.com/AlexSerbinov/krepto/releases)** • **[View Source Code](https://github.com/AlexSerbinov/krepto)** • **[Report Issues](https://github.com/AlexSerbinov/krepto/issues)**
 
 *Krepto - Making Cryptocurrency Simple and Accessible*
 

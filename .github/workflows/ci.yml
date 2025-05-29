@@ -275,14 +275,18 @@ jobs:
       - name: Find built executables
         shell: cmd
         run: |
-          echo "=== Searching for .exe files ==="
-          dir /s *.exe | findstr /i "bitcoin qt"
+          echo "=== Searching for ALL .exe files ==="
+          dir /s *.exe
+          echo "=== Specifically looking for bitcoin-qt.exe ==="
+          dir /s bitcoin-qt.exe 2>nul || echo "bitcoin-qt.exe NOT FOUND!"
           echo "=== Current directory structure ==="
           dir
           echo "=== src directory ==="
           if exist src dir src
-          echo "=== build_msvc directory ==="
+          echo "=== build_msvc directory structure ==="
           if exist build_msvc dir build_msvc
+          echo "=== bitcoin-qt project directory ==="
+          if exist build_msvc\bitcoin-qt dir build_msvc\bitcoin-qt
 
       - name: Save Ccache cache
         uses: actions/cache/save@v4

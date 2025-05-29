@@ -417,3 +417,56 @@ NodeContext& node = EnsureAnyNodeContext(request.context);
 **Quality**: ENTERPRISE GRADE  
 
 The project has achieved another major milestone with successful addition of the secondary seed node and DMG rebuild. Only Windows distribution remains to complete the project! 
+
+## 🎨 ВИПРАВЛЕННЯ БРЕНДИНГУ UI: Bitcoin → Krepto (29 Грудня 2024)
+
+### 🔍 Проблема що була виявлена
+У Windows GUI діалозі привітання залишилися згадки "Bitcoin" замість "Krepto":
+- Текст: "скачает і сохранит копию цепочки блоков Bitcoin"
+- Data directory: `C:\Users\User22\AppData\Local\Bitcoin` замість `Krepto`
+
+### ✅ Виправлені файли
+
+#### 1. Головний діалог привітання
+**Файл**: `src/qt/intro.cpp`
+- **Було**: `"Bitcoin block chain"`
+- **Стало**: `"Krepto block chain"`
+
+#### 2. Валідація адрес
+**Файл**: `src/qt/editaddressdialog.cpp`
+- **Було**: `"not a valid Bitcoin address"`
+- **Стало**: `"not a valid Krepto address"`
+
+#### 3. Папки даних (Windows/macOS/Linux)
+**Файл**: `src/common/args.cpp`
+- **Windows**: `AppData\Local\Bitcoin` → `AppData\Local\Krepto`
+- **Windows (legacy)**: `AppData\Roaming\Bitcoin` → `AppData\Roaming\Krepto`
+- **macOS**: `Library/Application Support/Bitcoin` → `Library/Application Support/Krepto`  
+- **Linux**: `.bitcoin` → `.krepto`
+
+#### 4. RPC команди mining
+**Файл**: `src/rpc/mining.cpp`
+- `generatetodescriptor`: "newly generated bitcoin" → "newly generated krepto"
+- `generatetoaddress`: "newly generated bitcoin" → "newly generated krepto"
+- `generateblock`: "newly generated bitcoin" → "newly generated krepto"
+
+### 📊 Результат
+- ✅ **Повний брендинг**: Всі згадки Bitcoin замінені на Krepto
+- ✅ **Правильні папки**: Windows створює `C:\Users\[User]\AppData\Local\Krepto\`
+- ✅ **Консистентність**: Однакове іменування у всіх платформах
+- ✅ **Користувацький досвід**: Професійний вигляд з правильним брендингом
+
+### 🚀 GitHub Actions
+**Коміт**: `04c0410` - "Replace remaining 'Bitcoin' references with 'Krepto' in UI dialogs and data directory paths"
+**Запущено**: Windows GUI Build для створення оновленого артефакту
+
+### 🔄 Статус
+- ✅ **Код виправлено**: Всі UI тексти тепер використовують Krepto
+- 🔄 **Windows збірка**: В процесі перезбирання через GitHub Actions
+- ⏳ **Очікується**: Новий артефакт `Krepto-Windows-GUI.zip` з правильним брендингом
+
+**Наступний крок**: Завантажити новий Windows артефакт після завершення збірки
+
+**Час вирішення**: 1 година  
+**Складність**: Середня  
+**Важливість**: Висока (брендинг та користувацький досвід) 

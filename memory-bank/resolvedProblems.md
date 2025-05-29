@@ -855,7 +855,7 @@ libevent_openssl.c:64:10: fatal error: 'sys/uio.h' file not found
 - Нативне середовище
 
 #### 3. Використання Готових Збірок
-```bash
+   ```bash
 # Завантажити готові Bitcoin Core Windows збірки
 # Замінити брендинг та конфігурацію
 # Створити Krepto дистрибутив

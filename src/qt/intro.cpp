@@ -24,6 +24,7 @@
 #include <QMessageBox>
 
 #include <cmath>
+#include <fstream>
 
 /* Check free space asynchronously to prevent hanging the UI thread.
 
@@ -243,6 +244,56 @@ bool Intro::showIfNeeded(bool& did_show_intro, int64_t& prune_MiB)
                 if (TryCreateDirectories(GUIUtil::QStringToPath(dataDir))) {
                     // If a new data directory has been created, make wallets subdirectory too
                     TryCreateDirectories(GUIUtil::QStringToPath(dataDir) / "wallets");
+                    
+                    // Auto-create krepto.conf if it doesn't exist (essential for proper sync)
+                    fs::path configPath = GUIUtil::QStringToPath(dataDir) / "krepto.conf";
+                    if (!fs::exists(configPath)) {
+                        try {
+                            std::ofstream configFile(configPath);
+                            if (configFile.is_open()) {
+                                configFile << "# Krepto Configuration\n";
+                                configFile << "rpcuser=kreptouser\n";
+                                configFile << "rpcpassword=kreptopass123\n";
+                                configFile << "rpcport=12347\n";
+                                configFile << "port=12345\n";
+                                configFile << "server=1\n";
+                                configFile << "daemon=1\n";
+                                configFile << "\n";
+                                configFile << "# Working seed nodes\n";
+                                configFile << "addnode=164.68.117.90:12345\n";
+                                configFile << "addnode=5.189.133.204:12345\n";
+                                configFile << "\n";
+                                configFile << "# Performance settings\n";
+                                configFile << "dbcache=512\n";
+                                configFile << "maxconnections=50\n";
+                                configFile << "maxmempool=300\n";
+                                configFile << "\n";
+                                configFile << "# Logging\n";
+                                configFile << "debug=0\n";
+                                configFile << "printtoconsole=0\n";
+                                configFile << "\n";
+                                configFile << "# Network reliability\n";
+                                configFile << "timeout=30000\n";
+                                configFile << "connect=164.68.117.90:12345\n";
+                                configFile << "connect=5.189.133.204:12345\n";
+                                configFile << "\n";
+                                configFile << "# Node Settings\n";
+                                configFile << "listen=1\n";
+                                configFile << "\n";
+                                configFile << "# RPC Settings\n";
+                                configFile << "rpcbind=127.0.0.1\n";
+                                configFile << "rpcallowip=127.0.0.1\n";
+                                configFile << "\n";
+                                configFile << "# Force Krepto network (prevent Bitcoin connection)\n";
+                                configFile << "onlynet=ipv4\n";
+                                configFile << "discover=0\n";
+                                configFile << "dnsseed=0\n";
+                                configFile.close();
+                            }
+                        } catch (const std::exception&) {
+                            // If config creation fails, continue anyway
+                        }
+                    }
                 }
                 break;
             } catch (const fs::filesystem_error&) {

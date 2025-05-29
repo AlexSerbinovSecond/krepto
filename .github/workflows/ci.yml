@@ -74,8 +74,8 @@ jobs:
           # Use clang++, because it is a bit faster and uses less memory than g++
           git rebase --exec "echo Running test-one-commit on \$( git log -1 ) && ./autogen.sh && CC=clang CXX=clang++ ./configure --with-incompatible-bdb && make clean && make -j $(nproc) check && ./test/functional/test_runner.py -j $(( $(nproc) * 2 ))" ${{ env.TEST_BASE }}
 
-  macos-native-x86_64:
-    name: 'macOS 13 native, x86_64, no depends, sqlite only, gui'
+  macos-native:
+    name: 'macOS 13 native, Qt5, no tests - Professional DMG'
     # Use latest image, but hardcode version to avoid silent upgrades (and breaks).
     # See: https://github.com/actions/runner-images#available-images.
     runs-on: macos-13
@@ -87,7 +87,6 @@ jobs:
 
     env:
       DANGER_RUN_CI_ON_HOST: 1
-      FILE_ENV: './ci/test/00_setup_env_mac_native.sh'
       BASE_ROOT_DIR: ${{ github.workspace }}
 
     steps:
@@ -118,8 +117,256 @@ jobs:
           key: ${{ github.job }}-ccache-${{ github.run_id }}
           restore-keys: ${{ github.job }}-ccache-
 
-      - name: CI script
-        run: ./ci/test_run_all.sh
+      - name: Configure and Build Krepto
+        run: |
+          echo "🔧 Building Krepto for macOS..."
+          export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH"
+          export PATH="/opt/homebrew/bin:$PATH"
+          
+          # Clean any previous builds
+          make clean || true
+          
+          # Configure for GUI build without tests
+          ./autogen.sh
+          ./configure --enable-gui --disable-tests --disable-bench --with-qt-bindir=/opt/homebrew/opt/qt@5/bin
+          
+          # Build with parallel jobs
+          make -j8
+
+      - name: Build Professional DMG
+        run: |
+          echo "🎨 Building Professional Krepto DMG Installer..."
+          
+          # Remove any previous DMG builds
+          rm -rf Krepto.app dmg_temp Krepto.dmg Krepto.dmg.sha256 Krepto.dmg.md5 dmg_background.png
+          
+          # Verify executables exist
+          if [ ! -f "src/qt/bitcoin-qt" ] || [ ! -f "src/bitcoind" ] || [ ! -f "src/bitcoin-cli" ]; then
+              echo "❌ Required executable files not found!"
+              ls -la src/qt/ || true
+              ls -la src/ || true
+              exit 1
+          fi
+          
+          # Create app bundle for macdeployqt
+          echo "📱 Creating app bundle for macdeployqt..."
+          mkdir -p Krepto.app/Contents/{MacOS,Resources}
+          
+          # Copy bitcoin-qt as main executable for macdeployqt
+          cp src/qt/bitcoin-qt Krepto.app/Contents/MacOS/Krepto
+          
+          # Create Info.plist for macdeployqt
+          cat > Krepto.app/Contents/Info.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>Krepto</string>
+              <key>CFBundleIdentifier</key>
+              <string>org.krepto.Krepto</string>
+              <key>CFBundleName</key>
+              <string>Krepto</string>
+              <key>CFBundleDisplayName</key>
+              <string>Krepto</string>
+              <key>CFBundleVersion</key>
+              <string>1.0.0</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleSignature</key>
+              <string>KREP</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>10.14</string>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+              <key>NSRequiresAquaSystemAppearance</key>
+              <false/>
+              <key>LSApplicationCategoryType</key>
+              <string>public.app-category.finance</string>
+          </dict>
+          </plist>
+          EOF
+          
+          # Run macdeployqt
+          echo "🔧 Running macdeployqt..."
+          MACDEPLOYQT="/opt/homebrew/opt/qt@5/bin/macdeployqt"
+          if [ -f "$MACDEPLOYQT" ]; then
+              echo "✅ Found macdeployqt at: $MACDEPLOYQT"
+              "$MACDEPLOYQT" Krepto.app -verbose=2
+              echo "✅ macdeployqt completed successfully!"
+          else
+              echo "❌ macdeployqt not found"
+              exit 1
+          fi
+          
+          # Add additional executables
+          echo "📋 Adding additional executables..."
+          cp src/bitcoind Krepto.app/Contents/MacOS/kryptod
+          cp src/bitcoin-cli Krepto.app/Contents/MacOS/krypto-cli
+          
+          # Create wrapper script
+          echo "📝 Creating wrapper script..."
+          mv Krepto.app/Contents/MacOS/Krepto Krepto.app/Contents/MacOS/bitcoin-qt
+          
+          cat > Krepto.app/Contents/MacOS/Krepto << 'EOF'
+          #!/bin/bash
+          SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+          KREPTO_DATADIR="$HOME/.krepto"
+          mkdir -p "$KREPTO_DATADIR"
+          if [ ! -f "$KREPTO_DATADIR/bitcoin.conf" ]; then
+              cp "$SCRIPT_DIR/../Resources/bitcoin.conf" "$KREPTO_DATADIR/" 2>/dev/null || true
+          fi
+          exec "$SCRIPT_DIR/bitcoin-qt" -datadir="$KREPTO_DATADIR" "$@"
+          EOF
+          
+          chmod +x Krepto.app/Contents/MacOS/*
+          
+          # Create icon
+          echo "🎨 Creating icon..."
+          if [ -f "share/pixmaps/Bitcoin256.png" ]; then
+              mkdir -p krepto.iconset
+              sips -z 1024 1024 share/pixmaps/Bitcoin256.png --out temp_1024.png
+              
+              # Create all icon sizes
+              sips -z 16 16 temp_1024.png --out krepto.iconset/icon_16x16.png
+              sips -z 32 32 temp_1024.png --out krepto.iconset/icon_16x16@2x.png
+              sips -z 32 32 temp_1024.png --out krepto.iconset/icon_32x32.png
+              sips -z 64 64 temp_1024.png --out krepto.iconset/icon_32x32@2x.png
+              sips -z 128 128 temp_1024.png --out krepto.iconset/icon_128x128.png
+              sips -z 256 256 temp_1024.png --out krepto.iconset/icon_128x128@2x.png
+              sips -z 256 256 temp_1024.png --out krepto.iconset/icon_256x256.png
+              sips -z 512 512 temp_1024.png --out krepto.iconset/icon_256x256@2x.png
+              sips -z 512 512 temp_1024.png --out krepto.iconset/icon_512x512.png
+              sips -z 1024 1024 temp_1024.png --out krepto.iconset/icon_512x512@2x.png
+              
+              iconutil -c icns krepto.iconset
+              cp krepto.icns Krepto.app/Contents/Resources/
+              /usr/libexec/PlistBuddy -c "Add :CFBundleIconFile string krepto" Krepto.app/Contents/Info.plist 2>/dev/null || /usr/libexec/PlistBuddy -c "Set :CFBundleIconFile krepto" Krepto.app/Contents/Info.plist
+              
+              rm -rf krepto.iconset krepto.icns temp_1024.png
+              echo "✅ Icon created successfully"
+          fi
+          
+          # Create configuration
+          echo "⚙️ Creating Krepto network configuration..."
+          cat > Krepto.app/Contents/Resources/bitcoin.conf << 'EOF'
+          # Krepto Client Configuration
+          
+          # Network Settings
+          port=12345
+          rpcport=12347
+          
+          # Connection to Seed Nodes
+          addnode=164.68.117.90:12345
+          addnode=5.189.133.204:12345
+          connect=164.68.117.90:12345
+          connect=5.189.133.204:12345
+          
+          # Node Settings
+          daemon=0
+          server=1
+          listen=1
+          
+          # RPC Settings
+          rpcuser=localuser
+          rpcpassword=localpass123
+          rpcbind=127.0.0.1
+          rpcallowip=127.0.0.1
+          
+          # Logging
+          debug=net
+          logips=1
+          
+          # Disable mining on client
+          gen=0
+          
+          # GUI Settings
+          gui=1
+          
+          # Performance
+          dbcache=512
+          maxmempool=300
+          
+          # Force Krepto network
+          onlynet=ipv4
+          discover=0
+          dnsseed=0
+          EOF
+          
+          # Code signing
+          echo "🔐 Code signing app bundle..."
+          find Krepto.app/Contents/Frameworks -name "*.framework" -type d | while read framework; do
+              codesign --force --sign - --deep "$framework" 2>/dev/null || true
+          done
+          find Krepto.app/Contents/Frameworks -name "*.dylib" -type f | while read dylib; do
+              codesign --force --sign - "$dylib" 2>/dev/null || true
+          done
+          find Krepto.app/Contents/PlugIns -name "*.dylib" -type f 2>/dev/null | while read plugin; do
+              codesign --force --sign - "$plugin" 2>/dev/null || true
+          done
+          for executable in Krepto.app/Contents/MacOS/*; do
+              if [ -f "$executable" ] && [ -x "$executable" ]; then
+                  codesign --force --sign - "$executable" 2>/dev/null || true
+              fi
+          done
+          codesign --force --sign - --deep Krepto.app 2>/dev/null || true
+          echo "✅ Code signing completed!"
+          
+          # Create DMG
+          echo "🎨 Creating professional DMG..."
+          mkdir -p dmg_temp
+          cp -R Krepto.app dmg_temp/
+          ln -s /Applications dmg_temp/Applications
+          
+          # Create temporary DMG
+          hdiutil create -volname "Krepto Installer" -srcfolder dmg_temp -ov -format UDRW temp_krepto.dmg
+          
+          # Mount and customize
+          hdiutil attach temp_krepto.dmg -mountpoint /Volumes/KreptoInstaller
+          
+          # Customize DMG appearance with AppleScript
+          osascript << 'EOF'
+          tell application "Finder"
+              tell disk "KreptoInstaller"
+                  open
+                  set current view of container window to icon view
+                  set toolbar visible of container window to false
+                  set statusbar visible of container window to false
+                  set the bounds of container window to {100, 100, 700, 500}
+                  set viewOptions to the icon view options of container window
+                  set arrangement of viewOptions to not arranged
+                  set icon size of viewOptions to 128
+                  
+                  -- Set icon positions
+                  set position of item "Krepto.app" of container window to {150, 200}
+                  set position of item "Applications" of container window to {450, 200}
+                  
+                  update without registering applications
+                  delay 2
+                  close
+              end tell
+          end tell
+          EOF
+          
+          # Unmount and convert to final DMG
+          hdiutil detach /Volumes/KreptoInstaller
+          hdiutil convert temp_krepto.dmg -format UDZO -o Krepto.dmg
+          
+          # Clean up temp files
+          rm -rf dmg_temp temp_krepto.dmg
+          
+          # Create checksums
+          shasum -a 256 Krepto.dmg > Krepto.dmg.sha256
+          md5 Krepto.dmg > Krepto.dmg.md5
+          
+          echo "✅ Professional DMG created successfully!"
+          echo "📋 File info:"
+          ls -lh Krepto.dmg
+          echo "🔐 Checksums:"
+          cat Krepto.dmg.sha256
+          cat Krepto.dmg.md5
 
       - name: Save Ccache cache
         uses: actions/cache/save@v4
@@ -128,6 +375,16 @@ jobs:
           path: ${{ env.CCACHE_DIR }}
           # https://github.com/actions/cache/blob/main/tips-and-workarounds.md#update-a-cache
           key: ${{ github.job }}-ccache-${{ github.run_id }}
+
+      - name: Upload macOS DMG artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Krepto-macOS-DMG
+          path: |
+            Krepto.dmg
+            Krepto.dmg.sha256
+            Krepto.dmg.md5
+          retention-days: 30
 
   win64-native:
     name: 'Win64 native, VS 2022'

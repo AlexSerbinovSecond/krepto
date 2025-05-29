@@ -272,6 +272,18 @@ jobs:
       - name: Ccache stats
         run: ccache --show-stats
 
+      - name: Find built executables
+        shell: cmd
+        run: |
+          echo "=== Searching for .exe files ==="
+          dir /s *.exe | findstr /i "bitcoin qt"
+          echo "=== Current directory structure ==="
+          dir
+          echo "=== src directory ==="
+          if exist src dir src
+          echo "=== build_msvc directory ==="
+          if exist build_msvc dir build_msvc
+
       - name: Save Ccache cache
         uses: actions/cache/save@v4
         if: github.event_name != 'pull_request' && steps.ccache-cache.outputs.cache-hit != 'true'
@@ -321,9 +333,12 @@ jobs:
       - name: Create Windows GUI package
         shell: cmd
         run: |
+          if exist Krepto-Windows-GUI rmdir /s /q Krepto-Windows-GUI
           mkdir Krepto-Windows-GUI
-          copy build_msvc\Release\*.exe Krepto-Windows-GUI\
-          copy build_msvc\Release\*.dll Krepto-Windows-GUI\ 2>NUL || echo "No DLLs to copy"
+          copy src\*.exe Krepto-Windows-GUI\ >nul 2>&1 || echo "Copying from src..."
+          copy build_msvc\src\Release\*.exe Krepto-Windows-GUI\ >nul 2>&1 || echo "Copying from build_msvc\src\Release..."
+          copy *.exe Krepto-Windows-GUI\ >nul 2>&1 || echo "Copying from root..."
+          dir Krepto-Windows-GUI\
           echo seed=164.68.117.90:12345 > Krepto-Windows-GUI\bitcoin.conf
           echo seed=5.189.133.204:12345 >> Krepto-Windows-GUI\bitcoin.conf
           echo rpcuser=krepto >> Krepto-Windows-GUI\bitcoin.conf

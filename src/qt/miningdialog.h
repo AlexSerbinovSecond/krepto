@@ -47,7 +47,7 @@ private:
     void setupUI();
     void logMessage(const QString &message);
     void getBlockchainInfo();
-    
+
     // New methods for internal RPC
     void continueMining();
     void performInternalMining(const QString& miningAddress, int maxTries, int attemptNumber);
@@ -55,7 +55,7 @@ private:
     // New methods for compact logging
     void updateMiningProgress(int attemptNumber, uint32_t currentNonce, int maxTries);
     void clearLastLogLine();
-
+    
     // UI components
     QTextEdit *logTextEdit;
     QProgressBar *progressBar;
@@ -69,7 +69,7 @@ private:
     // Models
     ClientModel *clientModel;
     WalletModel *walletModel;
-
+    
     // Mining state
     bool isMining;
     int blocksFound;
@@ -84,7 +84,7 @@ private:
     // Timers
     QTimer *updateTimer;
     QTimer *miningTimer;
-
+    
     // Thread safety
     QMutex logMutex;
 };

@@ -187,12 +187,12 @@ void MiningDialog::startMining()
         
         if (walletModel && walletModel->wallet().getAddresses().size() > 0) {
             // Use existing address if available
-            auto addresses = walletModel->wallet().getAddresses();
-            for (const auto& addr : addresses) {
-                if (addr.purpose == wallet::AddressPurpose::RECEIVE) {
-                    miningAddress = QString::fromStdString(EncodeDestination(addr.dest));
+        auto addresses = walletModel->wallet().getAddresses();
+        for (const auto& addr : addresses) {
+            if (addr.purpose == wallet::AddressPurpose::RECEIVE) {
+                miningAddress = QString::fromStdString(EncodeDestination(addr.dest));
                     logMessage(tr("Using existing address: %1").arg(miningAddress));
-                    break;
+                break;
                 }
             }
         }
@@ -288,7 +288,7 @@ void MiningDialog::continueMining()
                       .arg(QString::number(currentDifficulty, 'f', 6))
                       .arg(adaptiveMaxTries / 1000)
                       .arg(blocksFound));
-            logMessage(tr(""));
+        logMessage(tr(""));
         }
         
         // Store attempt counter for lambda capture
@@ -518,17 +518,17 @@ void MiningDialog::getBlockchainInfo()
         // Use internal RPC call for blockchain info
         UniValue params(UniValue::VARR);
         UniValue result = clientModel->node().executeRpc("getblockchaininfo", params, "");
-        
+            
         if (result.isObject()) {
             int blocks = result["blocks"].getInt<int>();
             std::string bestHash = result["bestblockhash"].get_str();
             double difficulty = result["difficulty"].get_real();
-            
-            logMessage(tr("📊 Blockchain Info:"));
-            logMessage(tr("   Height: %1 blocks").arg(blocks));
-            logMessage(tr("   Difficulty: %1").arg(QString::number(difficulty, 'f', 6)));
+                
+                logMessage(tr("📊 Blockchain Info:"));
+                logMessage(tr("   Height: %1 blocks").arg(blocks));
+                logMessage(tr("   Difficulty: %1").arg(QString::number(difficulty, 'f', 6)));
             logMessage(tr("   Best block: %1").arg(QString::fromStdString(bestHash)));
-        }
+            }
     } catch (const std::exception& e) {
         logMessage(tr("Warning: Could not get blockchain info: %1").arg(QString::fromStdString(e.what())));
     }

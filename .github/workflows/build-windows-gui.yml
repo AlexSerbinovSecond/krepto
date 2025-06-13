@@ -1,3 +1,4 @@
+# Build Krepto Windows GUI - Updated to trigger build
 name: Build Krepto Windows GUI
 
 on:

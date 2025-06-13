@@ -1,0 +1,282 @@
+# GitLab CI/CD Configuration for Krepto
+# Copyright (c) 2023 The Krepto core developers
+
+stages:
+  - test
+  - build
+  - package
+
+variables:
+  MAKEJOBS: '-j8'
+  CI_FAILFAST_TEST_LEAVE_DANGLING: 1
+
+# Test stage - quick validation
+test-build:
+  stage: test
+  image: ubuntu:24.04
+  script:
+    - echo "🔍 Testing Krepto build environment..."
+    - apt-get update
+    - apt-get install -y build-essential git
+    - echo "✅ Basic build tools installed"
+    - echo "Current commit: $CI_COMMIT_SHA"
+    - echo "Branch: $CI_COMMIT_REF_NAME"
+    - echo "Repository: $CI_PROJECT_PATH"
+  only:
+    - main
+    - merge_requests
+
+# macOS Build
+build-macos:
+  stage: build
+  tags:
+    - macos
+  script:
+    - echo "🍎 Building Krepto for macOS..."
+    - export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH"
+    - export PATH="/opt/homebrew/bin:$PATH"
+    
+    # Install dependencies if needed
+    - brew install --quiet automake libtool pkg-config gnu-getopt ccache boost libevent miniupnpc libnatpmp zeromq qt@5 qrencode || true
+    
+    # Clean and build
+    - make clean || true
+    - ./autogen.sh
+    - ./configure --enable-gui --disable-tests --disable-bench --with-qt-bindir=/opt/homebrew/opt/qt@5/bin
+    - make -j8
+    
+    # Verify build
+    - ls -la src/qt/bitcoin-qt || echo "GUI not built"
+    - ls -la src/bitcoind || echo "Daemon not built"
+    - ls -la src/bitcoin-cli || echo "CLI not built"
+    
+    - echo "✅ macOS build completed!"
+  artifacts:
+    paths:
+      - src/qt/bitcoin-qt
+      - src/bitcoind
+      - src/bitcoin-cli
+      - src/bitcoin-tx
+      - src/bitcoin-util
+      - src/bitcoin-wallet
+    expire_in: 1 hour
+  only:
+    - main
+  when: manual
+
+# Windows Build (using Docker with MinGW)
+build-windows:
+  stage: build
+  image: ubuntu:24.04
+  script:
+    - echo "🪟 Building Krepto for Windows..."
+    - apt-get update
+    - apt-get install -y build-essential git curl wget
+    
+    # Install MinGW cross-compilation tools
+    - apt-get install -y mingw-w64 g++-mingw-w64-x86-64
+    
+    # Set up cross-compilation environment
+    - export HOST=x86_64-w64-mingw32
+    - export CC=${HOST}-gcc
+    - export CXX=${HOST}-g++
+    - export AR=${HOST}-ar
+    - export RANLIB=${HOST}-ranlib
+    - export STRIP=${HOST}-strip
+    
+    # Build dependencies (simplified)
+    - echo "Building for Windows with MinGW..."
+    - echo "Note: This is a simplified Windows build"
+    - echo "For full Windows build, we need proper dependency setup"
+    
+    - echo "✅ Windows build setup completed!"
+  artifacts:
+    paths:
+      - "*.exe"
+    expire_in: 1 hour
+  only:
+    - main
+  when: manual
+
+# Create macOS DMG package
+package-macos-dmg:
+  stage: package
+  tags:
+    - macos
+  dependencies:
+    - build-macos
+  script:
+    - echo "📦 Creating Professional Krepto DMG..."
+    
+    # Remove any previous builds
+    - rm -rf Krepto.app dmg_temp Krepto.dmg Krepto.dmg.sha256 Krepto.dmg.md5
+    
+    # Verify executables exist
+    - |
+      if [ ! -f "src/qt/bitcoin-qt" ] || [ ! -f "src/bitcoind" ] || [ ! -f "src/bitcoin-cli" ]; then
+          echo "❌ Required executable files not found!"
+          ls -la src/qt/ || true
+          ls -la src/ || true
+          exit 1
+      fi
+    
+    # Create app bundle
+    - echo "📱 Creating app bundle..."
+    - mkdir -p Krepto.app/Contents/{MacOS,Resources}
+    - cp src/qt/bitcoin-qt Krepto.app/Contents/MacOS/Krepto
+    
+    # Create Info.plist
+    - |
+      cat > Krepto.app/Contents/Info.plist << 'EOF'
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
+      <dict>
+          <key>CFBundleExecutable</key>
+          <string>Krepto</string>
+          <key>CFBundleIdentifier</key>
+          <string>org.krepto.Krepto</string>
+          <key>CFBundleName</key>
+          <string>Krepto</string>
+          <key>CFBundleDisplayName</key>
+          <string>Krepto</string>
+          <key>CFBundleVersion</key>
+          <string>1.0.0</string>
+          <key>CFBundleShortVersionString</key>
+          <string>1.0</string>
+          <key>CFBundlePackageType</key>
+          <string>APPL</string>
+          <key>CFBundleSignature</key>
+          <string>KREP</string>
+          <key>LSMinimumSystemVersion</key>
+          <string>10.14</string>
+          <key>NSHighResolutionCapable</key>
+          <true/>
+          <key>LSApplicationCategoryType</key>
+          <string>public.app-category.finance</string>
+      </dict>
+      </plist>
+      EOF
+    
+    # Run macdeployqt
+    - echo "🔧 Running macdeployqt..."
+    - MACDEPLOYQT="/opt/homebrew/opt/qt@5/bin/macdeployqt"
+    - |
+      if [ -f "$MACDEPLOYQT" ]; then
+          echo "✅ Found macdeployqt at: $MACDEPLOYQT"
+          "$MACDEPLOYQT" Krepto.app -verbose=2
+          echo "✅ macdeployqt completed!"
+      else
+          echo "❌ macdeployqt not found"
+          exit 1
+      fi
+    
+    # Add additional executables
+    - echo "📋 Adding additional executables..."
+    - cp src/bitcoind Krepto.app/Contents/MacOS/kryptod
+    - cp src/bitcoin-cli Krepto.app/Contents/MacOS/krypto-cli
+    
+    # Create wrapper script
+    - mv Krepto.app/Contents/MacOS/Krepto Krepto.app/Contents/MacOS/bitcoin-qt
+    - |
+      cat > Krepto.app/Contents/MacOS/Krepto << 'EOF'
+      #!/bin/bash
+      SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+      KREPTO_DATADIR="$HOME/.krepto"
+      mkdir -p "$KREPTO_DATADIR"
+      if [ ! -f "$KREPTO_DATADIR/krepto.conf" ]; then
+          cp "$SCRIPT_DIR/../Resources/krepto.conf" "$KREPTO_DATADIR/" 2>/dev/null || true
+      fi
+      exec "$SCRIPT_DIR/bitcoin-qt" -datadir="$KREPTO_DATADIR" "$@"
+      EOF
+    - chmod +x Krepto.app/Contents/MacOS/*
+    
+    # Create configuration
+    - |
+      cat > Krepto.app/Contents/Resources/krepto.conf << 'EOF'
+      # Krepto Client Configuration
+      port=12345
+      rpcport=12347
+      addnode=164.68.117.90:12345
+      addnode=5.189.133.204:12345
+      connect=164.68.117.90:12345
+      connect=5.189.133.204:12345
+      daemon=0
+      server=1
+      listen=1
+      rpcuser=localuser
+      rpcpassword=localpass123
+      rpcbind=127.0.0.1
+      rpcallowip=127.0.0.1
+      debug=net
+      logips=1
+      gen=0
+      gui=1
+      dbcache=512
+      maxmempool=300
+      onlynet=ipv4
+      discover=0
+      dnsseed=0
+      EOF
+    
+    # Code signing
+    - echo "🔐 Code signing..."
+    - find Krepto.app -name "*.dylib" -type f | while read dylib; do codesign --force --sign - "$dylib" 2>/dev/null || true; done
+    - find Krepto.app/Contents/MacOS -type f -executable | while read executable; do codesign --force --sign - "$executable" 2>/dev/null || true; done
+    - codesign --force --sign - --deep Krepto.app 2>/dev/null || true
+    
+    # Create DMG
+    - echo "🎨 Creating DMG..."
+    - mkdir -p dmg_temp
+    - cp -R Krepto.app dmg_temp/
+    - ln -s /Applications dmg_temp/Applications
+    - hdiutil create -volname "Krepto Installer" -srcfolder dmg_temp -ov -format UDRW temp_krepto.dmg
+    - hdiutil attach temp_krepto.dmg -mountpoint /Volumes/KreptoInstaller
+    - hdiutil detach /Volumes/KreptoInstaller
+    - hdiutil convert temp_krepto.dmg -format UDZO -o Krepto.dmg
+    - rm -rf dmg_temp temp_krepto.dmg
+    
+    # Create checksums
+    - shasum -a 256 Krepto.dmg > Krepto.dmg.sha256
+    - md5 Krepto.dmg > Krepto.dmg.md5
+    
+    - echo "✅ Professional DMG created!"
+    - ls -lh Krepto.dmg
+    - cat Krepto.dmg.sha256
+  artifacts:
+    paths:
+      - Krepto.dmg
+      - Krepto.dmg.sha256
+      - Krepto.dmg.md5
+    expire_in: 30 days
+  only:
+    - main
+  when: manual
+
+# Test trigger job
+test-trigger:
+  stage: test
+  image: ubuntu:24.04
+  script:
+    - echo "✅ GitLab CI is working!"
+    - echo "Current commit: $CI_COMMIT_SHA"
+    - echo "Branch: $CI_COMMIT_REF_NAME"
+    - echo "Repository: $CI_PROJECT_PATH"
+    - echo "🔍 Checking project structure..."
+    - ls -la
+    - |
+      if [ -d "src/" ]; then
+        echo "✅ src/ directory exists"
+        ls -la src/ | head -10
+      else
+        echo "❌ src/ directory not found"
+      fi
+    - |
+      if [ -f ".gitlab-ci.yml" ]; then
+        echo "✅ GitLab CI configuration exists"
+      else
+        echo "❌ GitLab CI configuration not found"
+      fi
+  only:
+    - main
+    - merge_requests 

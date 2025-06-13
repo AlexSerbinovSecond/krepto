@@ -1,0 +1,35 @@
+name: Test Build Trigger
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Test build trigger
+      run: |
+        echo "✅ GitHub Actions is working!"
+        echo "Current commit: ${{ github.sha }}"
+        echo "Branch: ${{ github.ref }}"
+        echo "Repository: ${{ github.repository }}"
+        
+    - name: Check Windows build trigger
+      run: |
+        echo "🔍 Checking if Windows build should trigger..."
+        if [ -d "src/" ]; then
+          echo "✅ src/ directory exists - Windows build should trigger"
+        else
+          echo "❌ src/ directory not found"
+        fi
+        
+        if [ -f ".github/workflows/build-windows-gui.yml" ]; then
+          echo "✅ Windows build workflow exists"
+        else
+          echo "❌ Windows build workflow not found"
+        fi 

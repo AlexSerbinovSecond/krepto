@@ -30,7 +30,7 @@ namespace {
  * Note that CANDIDATE is split up into 3 substates (DELAYED, BEST, READY), allowing more efficient implementation.
  * Also note that the sorting order of ByTxHashView relies on the specific order of values in this enum.
  *
- * Expected behaviour is:
+ * Expected behaviour:
  *   - When first announced by a peer, the state is CANDIDATE_DELAYED until reqtime is reached.
  *   - Announcements that have reached their reqtime but not been requested will be either CANDIDATE_READY or
  *     CANDIDATE_BEST. Neither of those has an expiration time; they remain in that state until they're requested or
